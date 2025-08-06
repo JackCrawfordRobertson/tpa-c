@@ -1,9 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import TestChart from './charts/TestChart';
+import PaymentsLineChart from './charts/LineChart';
 import './styles.css';
 
-// Sample payments data for testing
+// Sample data
 const samplePaymentsData = [
   { name: 'Jan', volume: 45000, value: 1200 },
   { name: 'Feb', volume: 52000, value: 1450 },
@@ -13,7 +14,7 @@ const samplePaymentsData = [
   { name: 'Jun', volume: 67000, value: 1820 }
 ];
 
-// Global payments charts library
+// Global chart library
 window.PaymentsCharts = {
   render: function(containerId, options = {}) {
     const container = document.getElementById(containerId);
@@ -34,6 +35,18 @@ window.PaymentsCharts = {
             width={options.width} 
             height={options.height}
             title={options.title}
+            className={options.className}
+          />
+        );
+        break;
+      case 'payments-line':
+        root.render(
+          <PaymentsLineChart 
+            data={data} 
+            width={options.width} 
+            height={options.height}
+            title={options.title}
+            className={options.className}
           />
         );
         break;
@@ -43,7 +56,7 @@ window.PaymentsCharts = {
   }
 };
 
-// Auto-render charts with data attributes
+// Auto-render
 document.addEventListener('DOMContentLoaded', function() {
   const chartContainers = document.querySelectorAll('[data-payments-chart]');
   chartContainers.forEach(container => {
