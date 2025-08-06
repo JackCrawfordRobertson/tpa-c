@@ -1,0 +1,33 @@
+<div id="payments-chart-quarterly" style="width: 100%; height: 400px; margin: 20px 0;"></div>
+<script>
+// Check if library is already loaded
+if (typeof window.PaymentsCharts === 'undefined') {
+  const script = document.createElement('script');
+  script.src = 'https://transcendent-lily-10f1ad.netlify.app//v1/payments-charts.min.js?v=3';
+  script.onload = function() {
+    renderCharts();
+  };
+  document.head.appendChild(script);
+} else {
+  renderCharts();
+}
+
+function renderCharts() {
+  const data1 = [
+    { name: "Q1 2024", volume: 145000, value: 32060 },
+    { name: "Q2 2024", volume: 162000, value: 42150 },
+    { name: "Q3 2024", volume: 158000, value: 43320 },
+    { name: "Q4 2024", volume: 171000, value: 46840 },
+    { name: "Q1 2025", volume: 189000, value: 51200 },
+    { name: "Q2 2025", volume: 203000, value: 56780 }
+  ];
+  
+  window.PaymentsCharts.render('payments-chart-quarterly', {
+    data: data1,
+    title: 'Quarterly Payment Trends',
+    showLogo: true,
+    width: '100%',
+    height: 400
+  });
+}
+</script>
