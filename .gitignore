@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+*.venv
+.env
+.venv/
+ENV/
+env/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# MacOS system files
+.DS_Store
+
+# VSCode settings
+.vscode/
+
+# Output files
+*.log
+*.out
+*.tmp
+
+pay360
+
+raw/
+
+node_modules
