@@ -1,222 +1,276 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import '../styles.css';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import "../styles.css";
 
-const TestChart = ({ data, width = '100%', height = 400, title, showLogo = true, className = '' }) => {
-  // The Payments Association green palette centered around #00dfb8
+const TestChart = ({
+  data,
+  width = "100%",
+  height = 400,
+  title,
+  showLogo = true,
+  className = "",
+}) => {
+  // shadcn/ui inspired colour palette
   const colours = {
-    // Primary green palette
-    primary: '#00dfb8',           // Main brand green
-    primaryDark: '#00c4a3',       // Darker shade for contrast
-    primaryLight: '#33e5c4',      // Lighter shade for gradients
+    primary: "#00dfb8",
+    secondary: "#01583C",
     
-    // Secondary greens
-    secondary: '#00b894',         // Deeper emerald green
-    secondaryLight: '#00d2a4',    // Medium emerald
+    background: "#ffffff",
+    card: "#fdfffe", // Very subtle teal tint added
+    cardTint: "#f9fffe", // Even more subtle for sections
+    border: "#e2e8f0",
+    input: "#ffffff",
     
-    // Accent greens
-    accent: '#00a085',            // Forest green
-    accentLight: '#26d0ce',       // Teal green
-    
-    // Supporting greens
-    tertiary: '#55efc4',          // Mint green
-    quaternary: '#74b9ff',        // Blue-green for variety
-    
-    // Neutral palette (keeping shadcn foundation)
-    background: 'hsl(0 0% 100%)',
-    card: 'hsl(0 0% 100%)',
-    border: 'hsl(154 25% 85%)',   // Green-tinted border
-    muted: 'hsl(154 30% 96%)',    // Very light green background
-    foreground: 'hsl(160 30% 15%)', // Dark green text
-    mutedForeground: 'hsl(160 15% 45%)', // Medium green text
+    foreground: "#0f172a",
+    muted: "#f8fafc",
+    mutedForeground: "#64748b",
     
     // Chart specific
-    gridLines: 'hsl(154 25% 88%)',
-    tooltipBg: 'hsl(0 0% 100%)',
-    shadow: 'rgba(0, 223, 184, 0.15)' // Green-tinted shadow
+    grid: "#f1f5f9",
+    axis: "#cbd5e1",
   };
 
-  const PaymentsLogo = () => (
-    <div className="payments-logo" style={{
-      width: '120px',
-      height: '40px',
-      background: `linear-gradient(135deg, ${colours.primary}, ${colours.secondary})`,
-      borderRadius: '6px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: 'white',
-      fontSize: '12px',
-      fontWeight: '600',
-      letterSpacing: '-0.025em',
-      boxShadow: `0 4px 6px ${colours.shadow}`
-    }}>
-      The Payments Association
+  const Logo = () => (
+    <div className="flex items-center">
+      <img
+        src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
+        alt="The Payments Association"
+        style={{
+          height: "40px", // Fixed typo from "40x" to "40px"
+          width: "auto",
+        }}
+      />
     </div>
   );
 
-  return (
-    <div className={`payments-chart-container ${className}`}>
-      <div className="chart-header">
-        <div className="chart-header-content">
-          <div className="chart-title-section">
-            {title && <h3 className="chart-title">{title}</h3>}
-            <p className="chart-subtitle">Payment transaction insights</p>
-          </div>
-          {showLogo && (
-            <div className="chart-logo">
-              <PaymentsLogo />
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div
+          style={{
+            backgroundColor: colours.background, // Keep tooltip pure white
+            border: `1px solid ${colours.border}`,
+            borderRadius: "8px",
+            padding: "12px",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            fontSize: "14px",
+            minWidth: "150px"
+          }}
+        >
+          <p style={{ 
+            margin: "0 0 8px 0",
+            fontWeight: "500",
+            color: colours.foreground
+          }}>
+            {label}
+          </p>
+          {payload.map((entry, index) => (
+            <div key={index} style={{ 
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "4px"
+            }}>
+              <div style={{
+                width: "12px",
+                height: "12px",
+                backgroundColor: entry.color,
+                borderRadius: "2px"
+              }}></div>
+              <span style={{ 
+                fontSize: "13px",
+                color: colours.mutedForeground
+              }}>
+                {entry.name}: 
+                <span style={{ 
+                  fontWeight: "500",
+                  color: colours.foreground,
+                  marginLeft: "4px"
+                }}>
+                  {entry.value.toLocaleString()}
+                </span>
+              </span>
             </div>
-          )}
+          ))}
         </div>
-      </div>
-      
-      <div className="chart-content">
-        <ResponsiveContainer width={width} height={height}>
-          <BarChart 
-            data={data} 
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            style={{ fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}
-          >
-            <defs>
-              {/* Primary green gradient for volume bars */}
-              <linearGradient id="primaryGreenGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={colours.primaryLight} stopOpacity={0.95} />
-                <stop offset="50%" stopColor={colours.primary} stopOpacity={0.9} />
-                <stop offset="100%" stopColor={colours.primaryDark} stopOpacity={0.85} />
-              </linearGradient>
-              
-              {/* Secondary green gradient for value bars */}
-              <linearGradient id="secondaryGreenGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={colours.secondaryLight} stopOpacity={0.95} />
-                <stop offset="50%" stopColor={colours.secondary} stopOpacity={0.9} />
-                <stop offset="100%" stopColor={colours.accent} stopOpacity={0.85} />
-              </linearGradient>
+      );
+    }
+    return null;
+  };
 
-              {/* Subtle glow effect */}
-              <filter id="greenGlow">
-                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                <feMerge> 
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/> 
-                </feMerge>
-              </filter>
-            </defs>
-            
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke={colours.gridLines}
-              opacity={0.6}
-              vertical={false}
-            />
-            
-            <XAxis 
-              dataKey="name" 
-              tick={{ 
-                fill: colours.mutedForeground, 
-                fontSize: 12,
-                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-                fontWeight: 500
-              }}
-              axisLine={{ stroke: colours.border, strokeWidth: 1 }}
-              tickLine={{ stroke: colours.border, strokeWidth: 1 }}
-              tickMargin={8}
-            />
-            
-            <YAxis 
-              tick={{ 
-                fill: colours.mutedForeground, 
-                fontSize: 12,
-                fontFamily: 'ui-sans-serif, system-ui, sans-serif'
-              }}
-              axisLine={{ stroke: colours.border, strokeWidth: 1 }}
-              tickLine={{ stroke: colours.border, strokeWidth: 1 }}
-              tickMargin={8}
-            />
-            
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: colours.tooltipBg,
-                border: `1px solid ${colours.primary}`,
-                borderRadius: '8px',
-                boxShadow: `0 10px 25px ${colours.shadow}`,
-                fontSize: '13px',
-                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+  return (
+    <div
+      className={`${className}`}
+      style={{
+        backgroundColor: colours.card, // Very subtle teal tint
+        border: `1px solid ${colours.border}`,
+        borderRadius: "12px",
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        overflow: "hidden"
+      }}
+    >
+      {/* Header - shadcn/ui style */}
+      <div
+        style={{
+          padding: "24px 24px 0 24px",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          backgroundColor: colours.cardTint // Even more subtle tint for header
+        }}
+      >
+        <div style={{ flex: 1 }}>
+          {title && (
+            <h3
+              style={{
+                margin: "0 0 2px 0",
+                fontSize: "18px",
+                fontWeight: "600",
                 color: colours.foreground,
-                padding: '12px'
+                lineHeight: "1.25",
+                letterSpacing: "-0.025em"
               }}
-              cursor={{ 
-                fill: colours.muted, 
-                opacity: 0.4,
-                stroke: colours.primary,
-                strokeWidth: 1
-              }}
-              labelStyle={{ 
-                color: colours.foreground, 
-                fontWeight: 600, 
-                marginBottom: '4px',
-                borderBottom: `2px solid ${colours.primary}`,
-                paddingBottom: '4px'
-              }}
-              itemStyle={{ 
-                color: colours.mutedForeground,
-                fontSize: '12px'
-              }}
+            >
+              {title}
+            </h3>
+          )}
+          <p
+            style={{
+              margin: "0",
+              fontSize: "14px",
+              color: colours.mutedForeground,
+              fontWeight: "400"
+            }}
+          >
+            Payment transaction analysis
+          </p>
+        </div>
+
+        {showLogo && (
+          <div style={{ marginLeft: "16px" }}>
+            <Logo />
+          </div>
+        )}
+      </div>
+
+      {/* Chart section */}
+      <div style={{ 
+        padding: "24px",
+        backgroundColor: colours.cardTint // Subtle tint for chart area
+      }}>
+        <ResponsiveContainer width={width} height={height}>
+          <BarChart
+            data={data}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={colours.grid}
+              vertical={false}
+              strokeWidth={1}
             />
-            
-            <Legend 
+
+            <XAxis
+              dataKey="name"
+              tick={{
+                fill: colours.mutedForeground,
+                fontSize: 12,
+                fontFamily: "ui-sans-serif, system-ui, sans-serif"
+              }}
+              axisLine={{ stroke: colours.border, strokeWidth: 1 }}
+              tickLine={false}
+              tickMargin={8}
+            />
+
+            <YAxis
+              tick={{
+                fill: colours.mutedForeground,
+                fontSize: 12,
+                fontFamily: "ui-sans-serif, system-ui, sans-serif"
+              }}
+              axisLine={false}
+              tickLine={false}
+              tickMargin={8}
+            />
+
+            <Tooltip content={<CustomTooltip />} />
+
+            <Legend
               wrapperStyle={{
-                paddingTop: '20px',
-                fontSize: '13px',
-                fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+                paddingTop: "20px",
+                fontSize: "13px",
+                color: colours.mutedForeground,
+                fontFamily: "ui-sans-serif, system-ui, sans-serif"
               }}
               iconType="rect"
             />
-            
-            <Bar 
-              dataKey="volume" 
-              fill="url(#primaryGreenGradient)" 
-              name="Transaction Volume"
+
+            <Bar
+              dataKey="volume"
+              fill={colours.primary}
+              name="Transaction volume"
               radius={[4, 4, 0, 0]}
-              stroke={colours.primaryDark}
-              strokeWidth={1}
-              filter="url(#greenGlow)"
+              strokeWidth={0}
             />
-            
-            <Bar 
-              dataKey="value" 
-              fill="url(#secondaryGreenGradient)" 
-              name="Transaction Value (£m)"
+
+            <Bar
+              dataKey="value"
+              fill={colours.secondary}
+              name="Transaction value (£m)"
               radius={[4, 4, 0, 0]}
-              stroke={colours.accent}
-              strokeWidth={1}
-              filter="url(#greenGlow)"
+              strokeWidth={0}
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
-      
-      <div className="chart-footer">
-        <p className="data-source">Data source: The Payments Association Industry Research</p>
+
+      {/* Footer - minimal shadcn/ui style */}
+      <div
+        style={{
+          padding: "0 24px 20px 24px",
+          borderTop: `1px solid ${colours.border}`,
+          paddingTop: "16px",
+          backgroundColor: colours.card // Subtle tint for footer
+        }}
+      >
+        <p
+          style={{
+            margin: "0",
+            fontSize: "12px",
+            color: colours.mutedForeground,
+            fontWeight: "400"
+          }}
+        >
+          Source: The payments association industry research
+        </p>
       </div>
     </div>
   );
 };
 
-// Sample data
+// Sample data - updated with better data
 const samplePaymentsData = [
-  { name: 'Jan', volume: 45000, value: 1200 },
-  { name: 'Feb', volume: 52000, value: 1450 },
-  { name: 'Mar', volume: 48000, value: 1320 },
-  { name: 'Apr', volume: 61000, value: 1680 },
-  { name: 'May', volume: 58000, value: 1590 },
-  { name: 'Jun', volume: 67000, value: 1820 }
+  { name: "Q1 2024", volume: 145000, value: 32060 },
+  { name: "Q2 2024", volume: 162000, value: 42150 },
+  { name: "Q3 2024", volume: 158000, value: 43320 },
+  { name: "Q4 2024", volume: 171000, value: 46840 },
+  { name: "Q1 2025", volume: 189000, value: 51200 },
+  { name: "Q2 2025", volume: 203000, value: 56780 }
 ];
 
-// Global chart library
+// Global chart library - keeping all functionality
 window.PaymentsCharts = {
-  render: function(containerId, options = {}) {
+  render: function (containerId, options = {}) {
     const container = document.getElementById(containerId);
     if (!container) {
       console.error(`Container with ID ${containerId} not found`);
@@ -227,30 +281,30 @@ window.PaymentsCharts = {
     const data = options.data || samplePaymentsData;
 
     root.render(
-      <TestChart 
-        data={data} 
-        width={options.width} 
+      <TestChart
+        data={data}
+        width={options.width}
         height={options.height}
         title={options.title}
         showLogo={options.showLogo}
         className={options.className}
       />
     );
-  }
+  },
 };
 
-// Auto-render
-document.addEventListener('DOMContentLoaded', function() {
-  const chartContainers = document.querySelectorAll('[data-payments-chart]');
-  chartContainers.forEach(container => {
-    const chartData = container.getAttribute('data-chart-data');
-    const chartTitle = container.getAttribute('data-chart-title');
-    const showLogo = container.getAttribute('data-show-logo') !== 'false';
-    
+// Auto-render - keeping all functionality
+document.addEventListener("DOMContentLoaded", function () {
+  const chartContainers = document.querySelectorAll("[data-payments-chart]");
+  chartContainers.forEach((container) => {
+    const chartData = container.getAttribute("data-chart-data");
+    const chartTitle = container.getAttribute("data-chart-title");
+    const showLogo = container.getAttribute("data-show-logo") !== "false";
+
     window.PaymentsCharts.render(container.id, {
       data: chartData ? JSON.parse(chartData) : undefined,
       title: chartTitle,
-      showLogo: showLogo
+      showLogo: showLogo,
     });
   });
 });
