@@ -41,13 +41,18 @@ const TestChart = ({
   };
 
   const Logo = () => (
-    <div className="flex items-center">
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
       <img
         src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
         alt="The Payments Association"
         style={{
-          height: "40px", // Fixed typo from "40x" to "40px"
+          height: "40px",
           width: "auto",
+          maxWidth: "100%"
         }}
       />
     </div>
@@ -58,13 +63,14 @@ const TestChart = ({
       return (
         <div
           style={{
-            backgroundColor: colours.background, // Keep tooltip pure white
+            backgroundColor: colours.background,
             border: `1px solid ${colours.border}`,
             borderRadius: "8px",
             padding: "12px",
-            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
             fontSize: "14px",
-            minWidth: "150px"
+            minWidth: "150px",
+            fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
           }}
         >
           <p style={{ 
@@ -85,11 +91,14 @@ const TestChart = ({
                 width: "12px",
                 height: "12px",
                 backgroundColor: entry.color,
-                borderRadius: "2px"
+                borderRadius: "2px",
+                flexShrink: 0
               }}></div>
               <span style={{ 
                 fontSize: "13px",
-                color: colours.mutedForeground
+                color: colours.mutedForeground,
+                display: "flex",
+                alignItems: "center"
               }}>
                 {entry.name}: 
                 <span style={{ 
@@ -110,26 +119,32 @@ const TestChart = ({
 
   return (
     <div
-      className={`${className}`}
       style={{
-        backgroundColor: colours.card, // Very subtle teal tint
+        backgroundColor: colours.card,
         border: `1px solid ${colours.border}`,
         borderRadius: "12px",
         fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        overflow: "hidden"
+        overflow: "hidden",
+        width: "100%",
+        boxSizing: "border-box"
       }}
+      className={className}
     >
-      {/* Header - shadcn/ui style */}
+      {/* Header */}
       <div
         style={{
           padding: "24px 24px 0 24px",
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
-          backgroundColor: colours.cardTint // Even more subtle tint for header
+          backgroundColor: colours.cardTint,
+          boxSizing: "border-box"
         }}
       >
-        <div style={{ flex: 1 }}>
+        <div style={{ 
+          flex: 1,
+          minWidth: 0 // Prevents flex item from overflowing
+        }}>
           {title && (
             <h3
               style={{
@@ -157,7 +172,10 @@ const TestChart = ({
         </div>
 
         {showLogo && (
-          <div style={{ marginLeft: "16px" }}>
+          <div style={{ 
+            marginLeft: "16px",
+            flexShrink: 0 // Prevents logo from shrinking
+          }}>
             <Logo />
           </div>
         )}
@@ -166,7 +184,8 @@ const TestChart = ({
       {/* Chart section */}
       <div style={{ 
         padding: "24px",
-        backgroundColor: colours.cardTint // Subtle tint for chart area
+        backgroundColor: colours.cardTint,
+        boxSizing: "border-box"
       }}>
         <ResponsiveContainer width={width} height={height}>
           <BarChart
@@ -234,13 +253,14 @@ const TestChart = ({
         </ResponsiveContainer>
       </div>
 
-      {/* Footer - minimal shadcn/ui style */}
+      {/* Footer */}
       <div
         style={{
           padding: "0 24px 20px 24px",
           borderTop: `1px solid ${colours.border}`,
           paddingTop: "16px",
-          backgroundColor: colours.card // Subtle tint for footer
+          backgroundColor: colours.card,
+          boxSizing: "border-box"
         }}
       >
         <p
@@ -258,7 +278,7 @@ const TestChart = ({
   );
 };
 
-// Sample data - updated with better data
+// Sample data
 const samplePaymentsData = [
   { name: "Q1 2024", volume: 145000, value: 32060 },
   { name: "Q2 2024", volume: 162000, value: 42150 },
@@ -268,7 +288,7 @@ const samplePaymentsData = [
   { name: "Q2 2025", volume: 203000, value: 56780 }
 ];
 
-// Global chart library - keeping all functionality
+// Global chart library
 window.PaymentsCharts = {
   render: function (containerId, options = {}) {
     const container = document.getElementById(containerId);
@@ -293,7 +313,7 @@ window.PaymentsCharts = {
   },
 };
 
-// Auto-render - keeping all functionality
+// Auto-render
 document.addEventListener("DOMContentLoaded", function () {
   const chartContainers = document.querySelectorAll("[data-payments-chart]");
   chartContainers.forEach((container) => {
