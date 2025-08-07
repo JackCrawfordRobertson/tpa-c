@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  BarChart,
+  BarChart as RechartsBarChart,
   Bar,
   XAxis,
   YAxis,
@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import "../styles.css";
 
-const TestChart = ({
+const PaymentsBarChart = ({
   data,
   width = "100%",
   height = 400,
@@ -47,7 +47,7 @@ const TestChart = ({
 
     if (showNotesModal) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -63,7 +63,7 @@ const TestChart = ({
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isDesktop = windowWidth >= 1024;
 
-  // shadcn/ui inspired colour palette
+  // Colour palette
   const colours = {
     primary: "#00dfb8",
     secondary: "#00573B",
@@ -85,7 +85,7 @@ const TestChart = ({
     axis: "#cbd5e1",
   };
 
-  // Info icon SVG (hard-coded)
+  // Info icon SVG
   const InfoIcon = ({ size = 16, color = colours.mutedForeground }) => (
     <svg
       width={size}
@@ -104,7 +104,7 @@ const TestChart = ({
     </svg>
   );
 
-  // Close icon SVG (hard-coded)
+  // Close icon SVG
   const CloseIcon = ({ size = 24, color = colours.mutedForeground }) => (
     <svg
       width={size}
@@ -217,7 +217,7 @@ const TestChart = ({
                 fontSize: isMobile ? '14px' : '16px',
                 lineHeight: '1.6',
                 color: colours.foreground,
-                whiteSpace: 'pre-wrap', // Preserve line breaks
+                whiteSpace: 'pre-wrap',
               }}
             >
               {notesDescription}
@@ -659,7 +659,7 @@ const TestChart = ({
           boxSizing: "border-box"
         }}>
           <ResponsiveContainer width={width} height={height}>
-            <BarChart
+            <RechartsBarChart
               data={visibleData}
               margin={{ 
                 top: isMobile ? 30 : 40, 
@@ -734,7 +734,7 @@ const TestChart = ({
                   label={<CustomBarLabel />}
                 />
               ))}
-            </BarChart>
+            </RechartsBarChart>
           </ResponsiveContainer>
 
           <PaginationControls />
@@ -760,7 +760,7 @@ const TestChart = ({
   );
 };
 
-// Sample data (same as before)
+// Sample data
 const samplePaymentsData = [
   { name: "Q1 2024", volume: 145000, value: 32060 },
   { name: "Q2 2024", volume: 162000, value: 42150 },
@@ -770,7 +770,7 @@ const samplePaymentsData = [
   { name: "Q2 2025", volume: 203000, value: 56780 }
 ];
 
-// Global chart library (same as before)
+// Global chart library
 window.PaymentsCharts = {
   render: function (containerId, options = {}) {
     const container = document.getElementById(containerId);
@@ -783,7 +783,7 @@ window.PaymentsCharts = {
     const data = options.data || samplePaymentsData;
 
     root.render(
-      <TestChart
+      <PaymentsBarChart
         data={data}
         width={options.width}
         height={options.height}
@@ -798,7 +798,7 @@ window.PaymentsCharts = {
   },
 };
 
-// Auto-render (same as before)
+// Auto-render functionality
 document.addEventListener("DOMContentLoaded", function () {
   const chartContainers = document.querySelectorAll("[data-payments-chart]");
   chartContainers.forEach((container) => {
@@ -820,4 +820,4 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-export default TestChart;
+export default PaymentsBarChart;

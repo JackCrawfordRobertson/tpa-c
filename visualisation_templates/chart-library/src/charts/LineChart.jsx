@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   LineChart,
@@ -9,32 +9,412 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Dot,
 } from "recharts";
 import "../styles.css";
 
-const LineChart = ({
+const TestLineChart = ({
   data,
   width = "100%",
   height = 400,
   title,
   showLogo = true,
   className = "",
+  sourceText = "The payments association industry research",
+  sourceUrl = null,
+  notesDescription = null,
 }) => {
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setCurrentPage(0);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setShowNotesModal(false);
+      }
+    };
+
+    if (showNotesModal) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showNotesModal]);
+
+  // Device breakpoints
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+  const isDesktop = windowWidth >= 1024;
+
+  // Same colour palette as bar chart
   const colours = {
     primary: "#00dfb8",
-    secondary: "#01583C",
+    secondary: "#00573B",
+    tertiary: "#00C29D",
+    quaternary: "#007152",
+    quinary: "#00A783",
+    
     background: "#ffffff",
     card: "#fdfffe",
     cardTint: "#f9fffe",
     border: "#e2e8f0",
     input: "#ffffff",
+    
     foreground: "#0f172a",
     muted: "#f8fafc",
     mutedForeground: "#64748b",
+    
     grid: "#f1f5f9",
     axis: "#cbd5e1",
   };
 
+  // Info icon SVG (same as bar chart)
+  const InfoIcon = ({ size = 16, color = colours.mutedForeground }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ cursor: 'pointer' }}
+    >
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 16v-4"/>
+      <path d="m12 8h.01"/>
+    </svg>
+  );
+
+  // Close icon SVG (same as bar chart)
+  const CloseIcon = ({ size = 24, color = colours.mutedForeground }) => (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ cursor: 'pointer' }}
+    >
+      <path d="M18 6L6 18"/>
+      <path d="M6 6l12 12"/>
+    </svg>
+  );
+
+  // Notes Modal Component (identical to bar chart)
+  const NotesModal = () => {
+    if (!showNotesModal || !notesDescription) return null;
+
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: isMobile ? '16px' : '32px',
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowNotesModal(false);
+          }
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: colours.background,
+            borderRadius: '12px',
+            border: `1px solid ${colours.border}`,
+            maxWidth: isMobile ? '100%' : '500px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+          <div
+            style={{
+              padding: isMobile ? '16px' : '24px',
+              borderBottom: `1px solid ${colours.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: isMobile ? '16px' : '18px',
+                fontWeight: '600',
+                color: colours.foreground,
+              }}
+            >
+              Chart Notes
+            </h3>
+            <button
+              onClick={() => setShowNotesModal(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '4px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = colours.muted;
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = 'transparent';
+              }}
+            >
+              <CloseIcon size={20} />
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div
+            style={{
+              padding: isMobile ? '16px' : '24px',
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: isMobile ? '14px' : '16px',
+                lineHeight: '1.6',
+                color: colours.foreground,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {notesDescription}
+            </p>
+          </div>
+
+          {/* Modal Footer */}
+          <div
+            style={{
+              padding: isMobile ? '12px 16px 16px' : '16px 24px 24px',
+              borderTop: `1px solid ${colours.border}`,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <button
+              onClick={() => setShowNotesModal(false)}
+              style={{
+                padding: '8px 16px',
+                fontSize: '14px',
+                backgroundColor: colours.primary,
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+                fontWeight: '500',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = colours.secondary;
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = colours.primary;
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Calculate items per page based on device (same as bar chart)
+  const getItemsPerPage = () => {
+    if (isMobile) {
+      if (data.length <= 3) return data.length;
+      return 3;
+    }
+    if (isTablet) {
+      if (data.length <= 4) return data.length;
+      return 4;
+    }
+    return data.length;
+  };
+
+  // Get visible data based on pagination
+  const getVisibleData = () => {
+    const itemsPerPage = getItemsPerPage();
+    if (itemsPerPage >= data.length) return data;
+    
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  // Calculate total pages
+  const getTotalPages = () => {
+    const itemsPerPage = getItemsPerPage();
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  // Dynamic line configuration based on data keys
+  const getLineConfigs = () => {
+    if (!data || data.length === 0) return [];
+    
+    const sampleData = data[0];
+    const dataKeys = Object.keys(sampleData).filter(key => key !== 'name' && typeof sampleData[key] === 'number');
+    
+    const maxLines = isMobile ? 2 : isTablet ? 3 : 5;
+    
+    const lineConfigs = [
+      { 
+        key: 'volume', 
+        name: isMobile ? 'Volume' : 'Transaction volume', 
+        color: colours.primary,
+        strokeWidth: isMobile ? 2 : 3
+      },
+      { 
+        key: 'value', 
+        name: isMobile ? 'Value (£m)' : 'Transaction value (£m)', 
+        color: colours.secondary,
+        strokeWidth: isMobile ? 2 : 3
+      },
+      { 
+        key: 'count', 
+        name: isMobile ? 'Count' : 'Transaction count', 
+        color: colours.tertiary,
+        strokeWidth: isMobile ? 2 : 3
+      },
+      { 
+        key: 'users', 
+        name: isMobile ? 'Users' : 'Active users', 
+        color: colours.quaternary,
+        strokeWidth: isMobile ? 2 : 3
+      },
+      { 
+        key: 'revenue', 
+        name: isMobile ? 'Revenue' : 'Revenue (£m)', 
+        color: colours.quinary,
+        strokeWidth: isMobile ? 2 : 3
+      },
+    ];
+
+    return lineConfigs.filter(config => dataKeys.includes(config.key)).slice(0, maxLines);
+  };
+
+  // Custom dot component for line points
+  const CustomDot = ({ cx, cy, fill, payload, dataKey }) => {
+    if (isMobile && getLineConfigs().length > 2) return null; // Hide dots on mobile for cluttered charts
+    
+    return (
+      <Dot
+        cx={cx}
+        cy={cy}
+        r={isMobile ? 3 : 4}
+        fill={fill}
+        stroke={fill}
+        strokeWidth={2}
+        style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))' }}
+      />
+    );
+  };
+
+  // Pagination controls (identical to bar chart)
+  const PaginationControls = () => {
+    const totalPages = getTotalPages();
+    if (totalPages <= 1) return null;
+
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '16px 0 8px 0',
+        borderTop: `1px solid ${colours.border}`,
+        marginTop: '16px'
+      }}>
+        <button
+          onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+          disabled={currentPage === 0}
+          style={{
+            padding: '6px 12px',
+            fontSize: '12px',
+            backgroundColor: currentPage === 0 ? colours.muted : colours.primary,
+            color: currentPage === 0 ? colours.mutedForeground : 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+          }}
+        >
+          Previous
+        </button>
+        
+        <span style={{
+          fontSize: '12px',
+          color: colours.mutedForeground,
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+        }}>
+          {currentPage + 1} of {totalPages}
+        </span>
+        
+        <button
+          onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+          disabled={currentPage === totalPages - 1}
+          style={{
+            padding: '6px 12px',
+            fontSize: '12px',
+            backgroundColor: currentPage === totalPages - 1 ? colours.muted : colours.primary,
+            color: currentPage === totalPages - 1 ? colours.mutedForeground : 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
+            fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+          }}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+  // Logo component (identical to bar chart)
   const Logo = () => (
     <div style={{
       display: "flex",
@@ -45,7 +425,7 @@ const LineChart = ({
         src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
         alt="The Payments Association"
         style={{
-          height: "40px",
+          height: isMobile ? "30px" : "40px",
           width: "auto",
           maxWidth: "100%"
         }}
@@ -53,6 +433,7 @@ const LineChart = ({
     </div>
   );
 
+  // Custom tooltip (same styling as bar chart but adapted for lines)
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -61,44 +442,44 @@ const LineChart = ({
             backgroundColor: colours.background,
             border: `1px solid ${colours.border}`,
             borderRadius: "8px",
-            padding: "12px",
+            padding: isMobile ? "8px" : "12px",
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-            fontSize: "14px",
-            minWidth: "150px",
+            fontSize: isMobile ? "12px" : "14px",
+            minWidth: isMobile ? "120px" : "150px",
             fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
           }}
         >
-          <p style={{
-            margin: "0 0 8px 0",
+          <p style={{ 
+            margin: "0 0 6px 0",
             fontWeight: "500",
-            colour: colours.foreground
+            color: colours.foreground
           }}>
             {label}
           </p>
           {payload.map((entry, index) => (
-            <div key={index} style={{
+            <div key={index} style={{ 
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              marginBottom: "4px"
+              gap: "6px",
+              marginBottom: "3px"
             }}>
               <div style={{
-                width: "12px",
-                height: "12px",
+                width: "10px",
+                height: "3px",
                 backgroundColor: entry.color,
-                borderRadius: "2px",
+                borderRadius: "1px",
                 flexShrink: 0
               }}></div>
-              <span style={{
-                fontSize: "13px",
-                colour: colours.mutedForeground,
+              <span style={{ 
+                fontSize: isMobile ? "11px" : "13px",
+                color: colours.mutedForeground,
                 display: "flex",
                 alignItems: "center"
               }}>
-                {entry.name}:
-                <span style={{
+                {entry.name}: 
+                <span style={{ 
                   fontWeight: "500",
-                  colour: colours.foreground,
+                  color: colours.foreground,
                   marginLeft: "4px"
                 }}>
                   {entry.value.toLocaleString()}
@@ -112,169 +493,296 @@ const LineChart = ({
     return null;
   };
 
-  return (
-    <div
-      style={{
-        backgroundColor: colours.card,
-        border: `1px solid ${colours.border}`,
-        borderRadius: "12px",
-        fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-        overflow: "hidden",
-        width: "100%",
-        boxSizing: "border-box"
-      }}
-      className={className}
-    >
-      <div
-        style={{
-          padding: "24px 24px 0 24px",
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          backgroundColor: colours.cardTint,
-          boxSizing: "border-box"
-        }}
-      >
-        <div style={{
-          flex: 1,
-          minWidth: 0
-        }}>
-          {title && (
-            <h3
-              style={{
-                margin: "0 0 2px 0",
-                fontSize: "18px",
-                fontWeight: "600",
-                colour: colours.foreground,
-                lineHeight: "1.25",
-                letterSpacing: "-0.025em"
-              }}
-            >
-              {title}
-            </h3>
-          )}
-          <p
+  // Footer content component (identical to bar chart)
+  const FooterContent = () => {
+    const textStyle = {
+      margin: "0",
+      fontSize: isMobile ? "10px" : "12px",
+      color: colours.mutedForeground,
+      fontWeight: "400"
+    };
+
+    const SourceText = () => {
+      if (sourceUrl) {
+        return (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              margin: "0",
-              fontSize: "14px",
-              colour: colours.mutedForeground,
-              fontWeight: "400"
+              ...textStyle,
+              textDecoration: "underline",
+              cursor: "pointer",
+              transition: "color 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.color = colours.primary;
+            }}
+            onMouseOut={(e) => {
+              e.target.style.color = colours.mutedForeground;
             }}
           >
-            Payment transaction analysis
-          </p>
-        </div>
+            Source: {sourceText}
+          </a>
+        );
+      }
 
-        {showLogo && (
-          <div style={{
-            marginLeft: "16px",
-            flexShrink: 0
+      return (
+        <span style={textStyle}>
+          Source: {sourceText}
+        </span>
+      );
+    };
+
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '8px' : '16px',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '4px' : '16px',
+          alignItems: isMobile ? 'flex-start' : 'center',
+        }}>
+          <SourceText />
+          <span style={{
+            ...textStyle,
+            color: colours.mutedForeground,
           }}>
-            <Logo />
+            Chart: Payments Intelligence
+          </span>
+        </div>
+        
+        {/* Notes Icon */}
+        {notesDescription && (
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              padding: '4px',
+              borderRadius: '4px',
+              transition: 'background-color 0.2s ease',
+            }}
+            onClick={() => setShowNotesModal(true)}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = colours.muted;
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title="View chart notes"
+          >
+            <InfoIcon size={isMobile ? 14 : 16} />
+            <span style={{
+              ...textStyle,
+              fontSize: isMobile ? "9px" : "11px",
+              color: colours.mutedForeground,
+            }}>
+              Notes
+            </span>
           </div>
         )}
       </div>
+    );
+  };
 
-      <div style={{
-        padding: "24px",
-        backgroundColor: colours.cardTint,
-        boxSizing: "border-box"
-      }}>
-        <ResponsiveContainer width={width} height={height}>
-          <LineChart
-            data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={colours.grid}
-              vertical={false}
-              strokeWidth={1}
-            />
+  const lineConfigs = getLineConfigs();
+  const visibleData = getVisibleData();
+  const totalPages = getTotalPages();
 
-            <XAxis
-              dataKey="name"
-              tick={{
-                fill: colours.mutedForeground,
-                fontSize: 12,
-                fontFamily: "ui-sans-serif, system-ui, sans-serif"
-              }}
-              axisLine={{ stroke: colours.border, strokeWidth: 1 }}
-              tickLine={false}
-              tickMargin={8}
-            />
-
-            <YAxis
-              tick={{
-                fill: colours.mutedForeground,
-                fontSize: 12,
-                fontFamily: "ui-sans-serif, system-ui, sans-serif"
-              }}
-              axisLine={false}
-              tickLine={false}
-              tickMargin={8}
-            />
-
-            <Tooltip content={<CustomTooltip />} />
-
-            <Legend
-              wrapperStyle={{
-                paddingTop: "20px",
-                fontSize: "13px",
-                colour: colours.mutedForeground,
-                fontFamily: "ui-sans-serif, system-ui, sans-serif"
-              }}
-              iconType="rect"
-            />
-
-            <Line
-              type="monotone"
-              dataKey="volume"
-              stroke={colours.primary}
-              name="Transaction volume"
-              strokeWidth={3}
-              dot={{ r: 3 }}
-              activeDot={{ r: 6 }}
-            />
-
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke={colours.secondary}
-              name="Transaction value (£m)"
-              strokeWidth={3}
-              dot={{ r: 3 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
+  return (
+    <>
       <div
         style={{
-          padding: "0 24px 20px 24px",
-          borderTop: `1px solid ${colours.border}`,
-          paddingTop: "16px",
           backgroundColor: colours.card,
+          border: `1px solid ${colours.border}`,
+          borderRadius: "12px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+          overflow: "hidden",
+          width: "100%",
           boxSizing: "border-box"
         }}
+        className={className}
       >
-        <p
+        {/* Header (identical to bar chart) */}
+        <div
           style={{
-            margin: "0",
-            fontSize: "12px",
-            colour: colours.mutedForeground,
-            fontWeight: "400"
+            padding: isMobile ? "16px 16px 0 16px" : "24px 24px 0 24px",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            backgroundColor: colours.cardTint,
+            boxSizing: "border-box"
           }}
         >
-          Source: The payments association industry research
-        </p>
+          <div style={{ 
+            flex: 1,
+            minWidth: 0
+          }}>
+            {title && (
+              <h3
+                style={{
+                  margin: "0 0 2px 0",
+                  fontSize: isMobile ? "16px" : "18px",
+                  fontWeight: "600",
+                  color: colours.foreground,
+                  lineHeight: "1.25",
+                  letterSpacing: "-0.025em"
+                }}
+              >
+                {title}
+              </h3>
+            )}
+            <p
+              style={{
+                margin: "0",
+                fontSize: isMobile ? "12px" : "14px",
+                color: colours.mutedForeground,
+                fontWeight: "400"
+              }}
+            >
+              {isMobile ? "Payment trends" : "Payment transaction trends"}
+              {totalPages > 1 && (
+                <span style={{ marginLeft: "8px", fontSize: isMobile ? "10px" : "12px" }}>
+                  ({currentPage + 1}/{totalPages})
+                </span>
+              )}
+            </p>
+          </div>
+
+          {showLogo && (
+            <div style={{ 
+              marginLeft: isMobile ? "8px" : "16px",
+              flexShrink: 0
+            }}>
+              <Logo />
+            </div>
+          )}
+        </div>
+
+        {/* Chart section */}
+        <div style={{ 
+          padding: isMobile ? "16px" : "24px",
+          backgroundColor: colours.cardTint,
+          boxSizing: "border-box"
+        }}>
+          <ResponsiveContainer width={width} height={height}>
+            <LineChart
+              data={visibleData}
+              margin={{ 
+                top: isMobile ? 20 : 30, 
+                right: isMobile ? 10 : 30, 
+                left: isMobile ? 10 : 20, 
+                bottom: 5 
+              }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={colours.grid}
+                vertical={false}
+                strokeWidth={1}
+              />
+
+              <XAxis
+                dataKey="name"
+                tick={{
+                  fill: colours.mutedForeground,
+                  fontSize: isMobile ? 10 : 12,
+                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
+                }}
+                axisLine={{ stroke: colours.border, strokeWidth: 1 }}
+                tickLine={false}
+                tickMargin={8}
+                interval={0}
+                angle={isMobile ? -45 : 0}
+                textAnchor={isMobile ? "end" : "middle"}
+                height={isMobile ? 60 : 30}
+              />
+
+              <YAxis
+                tick={{
+                  fill: colours.mutedForeground,
+                  fontSize: isMobile ? 10 : 12,
+                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
+                }}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => {
+                  if (isMobile) {
+                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+                    return value.toString();
+                  }
+                  return value.toLocaleString();
+                }}
+              />
+
+              <Tooltip content={<CustomTooltip />} />
+
+              <Legend
+                wrapperStyle={{
+                  paddingTop: isMobile ? "12px" : "20px",
+                  fontSize: isMobile ? "11px" : "13px",
+                  color: colours.mutedForeground,
+                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
+                }}
+                iconType="line"
+                layout={isMobile && lineConfigs.length > 2 ? "vertical" : "horizontal"}
+              />
+
+              {lineConfigs.map((lineConfig, index) => (
+                <Line
+                  key={lineConfig.key}
+                  type="monotone"
+                  dataKey={lineConfig.key}
+                  stroke={lineConfig.color}
+                  strokeWidth={lineConfig.strokeWidth}
+                  name={lineConfig.name}
+                  dot={<CustomDot />}
+                  activeDot={{ 
+                    r: isMobile ? 4 : 5, 
+                    fill: lineConfig.color,
+                    stroke: colours.background,
+                    strokeWidth: 2,
+                    style: { filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))' }
+                  }}
+                  connectNulls={false}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+
+          <PaginationControls />
+        </div>
+
+        {/* Footer (identical to bar chart) */}
+        <div
+          style={{
+            padding: isMobile ? "0 16px 16px 16px" : "0 24px 20px 24px",
+            borderTop: `1px solid ${colours.border}`,
+            paddingTop: isMobile ? "12px" : "16px",
+            backgroundColor: colours.card,
+            boxSizing: "border-box"
+          }}
+        >
+          <FooterContent />
+        </div>
       </div>
-    </div>
+
+      {/* Notes Modal */}
+      <NotesModal />
+    </>
   );
 };
 
-// Sample data
+// Sample data (same as bar chart)
 const samplePaymentsData = [
   { name: "Q1 2024", volume: 145000, value: 32060 },
   { name: "Q2 2024", volume: 162000, value: 42150 },
@@ -284,43 +792,55 @@ const samplePaymentsData = [
   { name: "Q2 2025", volume: 203000, value: 56780 }
 ];
 
-window.PaymentsCharts = {
-  render: function (containerId, options = {}) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container with ID ${containerId} not found`);
-      return;
-    }
+// Global chart library extension
+window.PaymentsCharts = window.PaymentsCharts || {};
 
-    const root = createRoot(container);
-    const data = options.data || samplePaymentsData;
+// Add line chart to the global library
+window.PaymentsCharts.renderLineChart = function (containerId, options = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container with ID ${containerId} not found`);
+    return;
+  }
 
-    root.render(
-      <LineChart
-        data={data}
-        width={options.width}
-        height={options.height}
-        title={options.title}
-        showLogo={options.showLogo}
-        className={options.className}
-      />
-    );
-  },
+  const root = createRoot(container);
+  const data = options.data || samplePaymentsData;
+
+  root.render(
+    <TestLineChart
+      data={data}
+      width={options.width}
+      height={options.height}
+      title={options.title}
+      showLogo={options.showLogo}
+      className={options.className}
+      sourceText={options.sourceText}
+      sourceUrl={options.sourceUrl}
+      notesDescription={options.notesDescription}
+    />
+  );
 };
 
+// Auto-render for line charts
 document.addEventListener("DOMContentLoaded", function () {
-  const chartContainers = document.querySelectorAll("[data-payments-chart]");
-  chartContainers.forEach((container) => {
+  const lineChartContainers = document.querySelectorAll("[data-payments-line-chart]");
+  lineChartContainers.forEach((container) => {
     const chartData = container.getAttribute("data-chart-data");
     const chartTitle = container.getAttribute("data-chart-title");
     const showLogo = container.getAttribute("data-show-logo") !== "false";
+    const sourceText = container.getAttribute("data-source-text");
+    const sourceUrl = container.getAttribute("data-source-url");
+    const notesDescription = container.getAttribute("data-notes-description");
 
-    window.PaymentsCharts.render(container.id, {
+    window.PaymentsCharts.renderLineChart(container.id, {
       data: chartData ? JSON.parse(chartData) : undefined,
       title: chartTitle,
       showLogo: showLogo,
+      sourceText: sourceText,
+      sourceUrl: sourceUrl,
+      notesDescription: notesDescription,
     });
   });
 });
 
-export default LineChart;
+export default TestLineChart;

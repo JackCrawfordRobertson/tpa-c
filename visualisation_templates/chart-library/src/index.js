@@ -1,1 +1,1 @@
-import './charts/TestChart';
+import './charts/LineChart';
