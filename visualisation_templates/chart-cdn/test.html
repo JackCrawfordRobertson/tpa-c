@@ -4,7 +4,7 @@
 // Library load check - IGNORE THIS BLOCK
 if (typeof window.PaymentsCharts === 'undefined') {
   const script = document.createElement('script');
-  script.src = 'https://transcendent-lily-10f1ad.netlify.app/v1/line-payments-charts.min.js?v=1';
+  script.src = 'https://transcendent-lily-10f1ad.netlify.app/v1/line-payments-charts.min.js?v=2';
   script.onload = function() {
     renderCharts();
   };
@@ -15,90 +15,84 @@ if (typeof window.PaymentsCharts === 'undefined') {
 
 function renderCharts() {
   // ======================================
-  // LINE CHART DATA EXAMPLES - Choose one below
+  // SMART TOOLTIP DATA EXAMPLES
   // ======================================
   
-  // SINGLE LINE CHART
-  const singleLineData = [
-    { name: "Q1 2024", volume: 145000 },
-    { name: "Q2 2024", volume: 162000 },
-    { name: "Q3 2024", volume: 158000 },
-    { name: "Q4 2024", volume: 171000 }
-  ];
-
-  // TWO LINE CHART (Most Common)
-  const twoLineData = [
+  // PAYMENT DATA (Auto-formats: volume → Transaction Volume, value → Transaction Value)
+  const paymentData = [
     { name: "Q1 2024", volume: 145000, value: 32060 },
     { name: "Q2 2024", volume: 162000, value: 42150 },
     { name: "Q3 2024", volume: 158000, value: 43320 },
-    { name: "Q4 2024", volume: 171000, value: 46840 },
-    { name: "Q1 2025", volume: 189000, value: 51200 },
-    { name: "Q2 2025", volume: 203000, value: 56780 }
+    { name: "Q4 2024", volume: 171000, value: 46840 }
   ];
 
-  // THREE LINE CHART
-  const threeLineData = [
-    { name: "Q1 2024", volume: 145000, value: 32060, count: 12500 },
-    { name: "Q2 2024", volume: 162000, value: 42150, count: 15300 },
-    { name: "Q3 2024", volume: 158000, value: 43320, count: 14800 },
-    { name: "Q4 2024", volume: 171000, value: 46840, count: 16200 }
+  // SALES DATA (Auto-formats: sales → Sales Revenue, profit → Net Profit)  
+  const salesData = [
+    { name: "Product A", sales: 125000, profit: 45000 },
+    { name: "Product B", sales: 158000, profit: 62000 },
+    { name: "Product C", sales: 134000, profit: 38000 },
+    { name: "Product D", sales: 167000, profit: 71000 }
   ];
 
-  // FIVE LINE CHART (Maximum)
-  const fiveLineData = [
-    { name: "Q1", volume: 145000, value: 32060, count: 12500, users: 8500, revenue: 125 },
-    { name: "Q2", volume: 162000, value: 42150, count: 15300, users: 9200, revenue: 142 },
-    { name: "Q3", volume: 158000, value: 43320, count: 14800, users: 8900, revenue: 138 },
-    { name: "Q4", volume: 171000, value: 46840, count: 16200, users: 9800, revenue: 156 }
+  // WEB ANALYTICS (Auto-formats: visitors → Unique Visitors, conversions → Conversion Rate)
+  const webData = [
+    { name: "Week 1", visitors: 2400, conversions: 45, bounceRate: 35 },
+    { name: "Week 2", visitors: 2650, conversions: 52, bounceRate: 32 },
+    { name: "Week 3", visitors: 2100, conversions: 38, bounceRate: 41 },
+    { name: "Week 4", visitors: 2890, conversions: 67, bounceRate: 28 }
   ];
 
-  // LARGE DATASET EXAMPLE (Tests mobile pagination)
-  const largeLineDataset = [
-    { name: "Jan 2024", volume: 145000, value: 32060 },
-    { name: "Feb 2024", volume: 162000, value: 42150 },
-    { name: "Mar 2024", volume: 158000, value: 43320 },
-    { name: "Apr 2024", volume: 171000, value: 46840 },
-    { name: "May 2024", volume: 189000, value: 51200 },
-    { name: "Jun 2024", volume: 203000, value: 56780 },
-    { name: "Jul 2024", volume: 195000, value: 54300 },
-    { name: "Aug 2024", volume: 187000, value: 52100 },
-    { name: "Sep 2024", volume: 201000, value: 58200 },
-    { name: "Oct 2024", volume: 215000, value: 61800 },
-    { name: "Nov 2024", volume: 208000, value: 59400 },
-    { name: "Dec 2024", volume: 225000, value: 65000 }
+  // FINANCIAL DATA (Auto-formats with currency: revenue → Revenue (£m))
+  const financialData = [
+    { name: "Q1", revenue: 1250000, costs: 890000, margin: 28.8 },
+    { name: "Q2", revenue: 1580000, costs: 1120000, margin: 29.1 },
+    { name: "Q3", revenue: 1340000, costs: 950000, margin: 29.1 },
+    { name: "Q4", revenue: 1670000, costs: 1180000, margin: 29.3 }
   ];
 
-  // TIME SERIES DATA (Monthly trends)
-  const timeSeriesData = [
-    { name: "Week 1", visitors: 2400, conversions: 45 },
-    { name: "Week 2", visitors: 2650, conversions: 52 },
-    { name: "Week 3", visitors: 2100, conversions: 38 },
-    { name: "Week 4", visitors: 2890, conversions: 67 },
-    { name: "Week 5", visitors: 3100, conversions: 71 },
-    { name: "Week 6", visitors: 2750, conversions: 58 }
+  // CUSTOM FIELD NAMES (Your own field names get auto-formatted)
+  const customData = [
+    { name: "Jan", activeUsers: 12500, newSignups: 2400, premiumUpgrades: 145 },
+    { name: "Feb", activeUsers: 13200, newSignups: 2650, premiumUpgrades: 167 },
+    { name: "Mar", activeUsers: 12800, newSignups: 2100, premiumUpgrades: 134 },
+    { name: "Apr", activeUsers: 14100, newSignups: 2890, premiumUpgrades: 189 }
+  ];
+
+  // PERFORMANCE DATA (Auto-formats: response → Response Time (ms), uptime → Uptime (%))
+  const performanceData = [
+    { name: "Server A", response: 145, uptime: 99.8, errors: 12 },
+    { name: "Server B", response: 167, uptime: 99.6, errors: 18 },
+    { name: "Server C", response: 134, uptime: 99.9, errors: 8 },
+    { name: "Server D", response: 156, uptime: 99.7, errors: 14 }
   ];
 
   // ======================================
-  // CHART CONFIGURATION
+  // CHART CONFIGURATIONS
   // ======================================
   
   window.PaymentsCharts.render('payments-chart-quarterly', {
-
     // DATA: Choose one from above examples
-    data: twoLineData, // Two line chart showing volume and value trends
+    data: salesData, // Will show "Unique Visitors", "Conversion Rate", "Bounce Rate (%)"
     
     // CHART SETTINGS
-    title: 'Quarterly Payment Trends',
-    showLogo: true, // Set to false to hide logo
+    title: 'Website Performance Analytics',
+    showLogo: true,
     width: '100%',
     height: 400,
     
-    // SOURCE INFORMATION
-    sourceText: 'UK Finance quarterly payment data',
-    sourceUrl: 'https://www.ukfinance.org.uk/data-and-research/payment-statistics',
+    // CUSTOM FIELD LABELS (Optional - Override auto-formatting)
+    fieldLabels: {
+      visitors: 'Site Visitors',      // Override default "Unique Visitors"
+      conversions: 'Total Conversions', // Override default "Conversion Rate"
+      // bounceRate will use default "Bounce Rate (%)"
+    },
     
-    // NOTES (Optional - leave blank or remove for no notes icon)
-    notesDescription: 'This line chart shows quarterly payment trends over time. Perfect for displaying time-series data and identifying patterns.',
+    // SOURCE INFORMATION  
+    sourceText: 'Google Analytics dashboard',
+    sourceUrl: 'https://analytics.google.com',
+    
+    // NOTES
+    notesDescription: 'Weekly website performance showing visitor trends and engagement metrics. Tooltips automatically format based on data field names.',
   });
 }
 </script>

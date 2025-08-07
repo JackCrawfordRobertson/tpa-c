@@ -22,6 +22,7 @@ const PaymentsLineChart = ({
   sourceText = "The payments association industry research",
   sourceUrl = null,
   notesDescription = null,
+  fieldLabels = {}, // Custom field labels override
 }) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [currentPage, setCurrentPage] = useState(0);
@@ -65,6 +66,95 @@ const PaymentsLineChart = ({
 
   const baseFont = "ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,sans-serif";
 
+  // Enhanced field name formatting
+  const formatFieldName = (fieldKey) => {
+    // Check for custom override first
+    if (fieldLabels[fieldKey]) {
+      return fieldLabels[fieldKey];
+    }
+
+    // Auto-format field names
+    const formatters = {
+      // Common payment fields
+      volume: isMobile ? 'Volume' : 'Transaction Volume',
+      value: isMobile ? 'Value (£m)' : 'Transaction Value (£m)',
+      count: isMobile ? 'Count' : 'Transaction Count',
+      users: isMobile ? 'Users' : 'Active Users',
+      revenue: isMobile ? 'Revenue' : 'Revenue (£m)',
+      
+      // Financial fields
+      sales: isMobile ? 'Sales' : 'Sales Revenue',
+      profit: isMobile ? 'Profit' : 'Net Profit',
+      margin: isMobile ? 'Margin' : 'Profit Margin',
+      costs: isMobile ? 'Costs' : 'Total Costs',
+      
+      // Web/Analytics fields
+      visitors: isMobile ? 'Visitors' : 'Unique Visitors',
+      conversions: isMobile ? 'Conversions' : 'Conversion Rate',
+      pageviews: isMobile ? 'Views' : 'Page Views',
+      sessions: isMobile ? 'Sessions' : 'User Sessions',
+      bounceRate: isMobile ? 'Bounce %' : 'Bounce Rate (%)',
+      
+      // Business metrics
+      customers: isMobile ? 'Customers' : 'Total Customers',
+      orders: isMobile ? 'Orders' : 'Order Count',
+      avgOrder: isMobile ? 'Avg Order' : 'Average Order Value',
+      retention: isMobile ? 'Retention' : 'Customer Retention (%)',
+      
+      // Performance metrics
+      response: isMobile ? 'Response' : 'Response Time (ms)',
+      uptime: isMobile ? 'Uptime' : 'Uptime (%)',
+      errors: isMobile ? 'Errors' : 'Error Count',
+      
+      // Generic fallbacks
+      amount: isMobile ? 'Amount' : 'Total Amount',
+      total: isMobile ? 'Total' : 'Total Value',
+      average: isMobile ? 'Average' : 'Average Value',
+      percentage: isMobile ? 'Percentage' : 'Percentage (%)',
+    };
+
+    // Use predefined formatter if available
+    if (formatters[fieldKey]) {
+      return formatters[fieldKey];
+    }
+
+    // Auto-format unknown fields
+    return fieldKey
+      .replace(/([A-Z])/g, ' $1') // Split camelCase
+      .replace(/[_-]/g, ' ')      // Replace underscores and dashes with spaces
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+      .trim();
+  };
+
+  // Enhanced value formatting for tooltips
+  const formatValue = (value, fieldKey) => {
+    // Custom formatting based on field type
+    const currencyFields = ['value', 'revenue', 'sales', 'profit', 'costs', 'amount', 'total', 'avgOrder'];
+    const percentageFields = ['margin', 'bounceRate', 'retention', 'uptime', 'percentage'];
+    const timeFields = ['response'];
+
+    if (currencyFields.includes(fieldKey)) {
+      if (value >= 1000000) return `£${(value / 1000000).toFixed(1)}M`;
+      if (value >= 1000) return `£${(value / 1000).toFixed(1)}K`;
+      return `£${value.toLocaleString()}`;
+    }
+
+    if (percentageFields.includes(fieldKey)) {
+      return `${value}%`;
+    }
+
+    if (timeFields.includes(fieldKey)) {
+      return `${value}ms`;
+    }
+
+    // Default number formatting
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toLocaleString();
+  };
+
   const getItemsPerPage = () => {
     if (isMobile) return data.length <= 3 ? data.length : 3;
     if (isTablet) return data.length <= 4 ? data.length : 4;
@@ -85,14 +175,16 @@ const PaymentsLineChart = ({
     const sampleData = data[0];
     const dataKeys = Object.keys(sampleData).filter(key => key !== 'name' && typeof sampleData[key] === 'number');
     const maxLines = isMobile ? 2 : isTablet ? 3 : 5;
-    const configs = [
-      { key: 'volume', name: isMobile ? 'Volume' : 'Transaction volume', color: colours.primary, strokeWidth: isMobile ? 2 : 3 },
-      { key: 'value', name: isMobile ? 'Value (£m)' : 'Transaction value (£m)', color: colours.secondary, strokeWidth: isMobile ? 2 : 3 },
-      { key: 'count', name: isMobile ? 'Count' : 'Transaction count', color: colours.tertiary, strokeWidth: isMobile ? 2 : 3 },
-      { key: 'users', name: isMobile ? 'Users' : 'Active users', color: colours.quaternary, strokeWidth: isMobile ? 2 : 3 },
-      { key: 'revenue', name: isMobile ? 'Revenue' : 'Revenue (£m)', color: colours.quinary, strokeWidth: isMobile ? 2 : 3 },
-    ];
-    return configs.filter(config => dataKeys.includes(config.key)).slice(0, maxLines);
+    
+    // Color assignment - cycles through available colors
+    const colors = [colours.primary, colours.secondary, colours.tertiary, colours.quaternary, colours.quinary];
+    
+    return dataKeys.slice(0, maxLines).map((key, index) => ({
+      key,
+      name: formatFieldName(key),
+      color: colors[index % colors.length],
+      strokeWidth: isMobile ? 2 : 3
+    }));
   };
 
   const CustomDot = ({ cx, cy, fill }) => {
@@ -107,17 +199,20 @@ const PaymentsLineChart = ({
         <div style={{
           backgroundColor: colours.background, border: `1px solid ${colours.border}`, borderRadius: "8px",
           padding: isMobile ? "8px" : "12px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: isMobile ? "12px" : "14px",
-          minWidth: isMobile ? "120px" : "150px", fontFamily: baseFont
+          minWidth: isMobile ? "140px" : "180px", fontFamily: baseFont
         }}>
-          <p style={{ margin: "0 0 6px 0", fontWeight: "500", color: colours.foreground }}>{label}</p>
+          <p style={{ margin: "0 0 8px 0", fontWeight: "600", color: colours.foreground, borderBottom: `1px solid ${colours.border}`, paddingBottom: "4px" }}>
+            {label}
+          </p>
           {payload.map((entry, index) => (
-            <div key={index} style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-              <div style={{ width: "10px", height: "3px", backgroundColor: entry.color,
-                           borderRadius: "1px", flexShrink: 0 }}></div>
-              <span style={{ fontSize: isMobile ? "11px" : "13px", color: colours.mutedForeground }}>
-                {entry.name}: <span style={{ fontWeight: "500", color: colours.foreground, marginLeft: "4px" }}>
-                  {entry.value.toLocaleString()}
-                </span>
+            <div key={index} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+              <div style={{ width: "12px", height: "3px", backgroundColor: entry.color,
+                           borderRadius: "2px", flexShrink: 0 }}></div>
+              <span style={{ fontSize: isMobile ? "11px" : "13px", color: colours.mutedForeground, flex: 1 }}>
+                {entry.name}:
+              </span>
+              <span style={{ fontWeight: "600", color: colours.foreground, fontSize: isMobile ? "11px" : "13px" }}>
+                {formatValue(entry.value, entry.dataKey)}
               </span>
             </div>
           ))}
@@ -162,7 +257,10 @@ const PaymentsLineChart = ({
               </h3>
             )}
             <p style={{ margin: "0", fontSize: isMobile ? "12px" : "14px", color: colours.mutedForeground, fontWeight: "400" }}>
-              {isMobile ? "Payment trends" : "Payment transaction trends"}
+              {lineConfigs.length === 1 
+                ? (isMobile ? "Trend analysis" : "Trend analysis over time")
+                : (isMobile ? "Multi-metric trends" : "Multi-metric trend analysis")
+              }
               {totalPages > 1 && (
                 <span style={{ marginLeft: "8px", fontSize: isMobile ? "10px" : "12px" }}>
                   ({currentPage + 1}/{totalPages})
@@ -251,7 +349,7 @@ const PaymentsLineChart = ({
                 </span>
               )}
               <span style={{ margin: "0", fontSize: isMobile ? "10px" : "12px", color: colours.mutedForeground, fontWeight: "400" }}>
-                Chart: Payments Intelligence (Line)
+                Chart: Payments Intelligence ({lineConfigs.length} line{lineConfigs.length !== 1 ? 's' : ''})
               </span>
             </div>
             {notesDescription && (
@@ -351,6 +449,7 @@ window.PaymentsCharts.render = function (containerId, options = {}) {
       sourceText={options.sourceText}
       sourceUrl={options.sourceUrl}
       notesDescription={options.notesDescription}
+      fieldLabels={options.fieldLabels || {}}
     />
   );
 };
