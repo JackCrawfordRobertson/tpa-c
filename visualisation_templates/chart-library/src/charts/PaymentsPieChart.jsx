@@ -25,12 +25,14 @@ const PaymentsPieChart = ({
   showLegend = true,
 }) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
     };
 
     window.addEventListener('resize', handleResize);
@@ -58,10 +60,78 @@ const PaymentsPieChart = ({
     };
   }, [showNotesModal]);
 
-  // Device breakpoints
+  // Enhanced device breakpoints
   const isMobile = windowWidth < 768;
+  const isSmallMobile = windowWidth < 480;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isDesktop = windowWidth >= 1024;
+
+  // Dynamic sizing based on screen size
+  const getResponsiveSizes = () => {
+    if (isSmallMobile) {
+      return {
+        containerPadding: "12px",
+        headerPadding: "12px 12px 0 12px",
+        footerPadding: "0 12px 12px 12px",
+        titleFontSize: "14px",
+        subtitleFontSize: "11px",
+        logoHeight: "24px",
+        chartHeight: Math.min(windowHeight * 0.5, 350),
+        chartMargin: { top: 15, right: 50, bottom: 15, left: 50 },
+        outerRadiusMultiplier: 0.18,
+        labelFontSize: "8px",
+        labelValueFontSize: "7px",
+      };
+    }
+    
+    if (isMobile) {
+      return {
+        containerPadding: "16px",
+        headerPadding: "16px 16px 0 16px",
+        footerPadding: "0 16px 16px 16px",
+        titleFontSize: "16px",
+        subtitleFontSize: "12px",
+        logoHeight: "28px",
+        chartHeight: Math.min(windowHeight * 0.6, 400),
+        chartMargin: { top: 20, right: 60, bottom: 20, left: 60 },
+        outerRadiusMultiplier: 0.22,
+        labelFontSize: "9px",
+        labelValueFontSize: "8px",
+      };
+    }
+    
+    if (isTablet) {
+      return {
+        containerPadding: "20px",
+        headerPadding: "20px 20px 0 20px",
+        footerPadding: "0 20px 16px 20px",
+        titleFontSize: "17px",
+        subtitleFontSize: "13px",
+        logoHeight: "36px",
+        chartHeight: height,
+        chartMargin: { top: 20, right: 70, bottom: 20, left: 70 },
+        outerRadiusMultiplier: 0.28,
+        labelFontSize: "11px",
+        labelValueFontSize: "10px",
+      };
+    }
+    
+    return {
+      containerPadding: "24px",
+      headerPadding: "24px 24px 0 24px",
+      footerPadding: "0 24px 20px 24px",
+      titleFontSize: "18px",
+      subtitleFontSize: "14px",
+      logoHeight: "40px",
+      chartHeight: height,
+      chartMargin: { top: 20, right: 80, bottom: 20, left: 80 },
+      outerRadiusMultiplier: 0.32,
+      labelFontSize: "12px",
+      labelValueFontSize: "11px",
+    };
+  };
+
+  const sizes = getResponsiveSizes();
 
   // Colour palette - only greens
   const colours = {
@@ -155,7 +225,7 @@ const PaymentsPieChart = ({
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 9999,
-          padding: isMobile ? '16px' : '32px',
+          padding: sizes.containerPadding,
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -180,7 +250,7 @@ const PaymentsPieChart = ({
           {/* Modal Header */}
           <div
             style={{
-              padding: isMobile ? '16px' : '24px',
+              padding: sizes.containerPadding,
               borderBottom: `1px solid ${colours.border}`,
               display: 'flex',
               alignItems: 'center',
@@ -190,7 +260,7 @@ const PaymentsPieChart = ({
             <h3
               style={{
                 margin: 0,
-                fontSize: isMobile ? '16px' : '18px',
+                fontSize: sizes.titleFontSize,
                 fontWeight: '600',
                 color: colours.foreground,
               }}
@@ -222,15 +292,11 @@ const PaymentsPieChart = ({
           </div>
 
           {/* Modal Content */}
-          <div
-            style={{
-              padding: isMobile ? '16px' : '24px',
-            }}
-          >
+          <div style={{ padding: sizes.containerPadding }}>
             <p
               style={{
                 margin: 0,
-                fontSize: isMobile ? '14px' : '16px',
+                fontSize: sizes.subtitleFontSize,
                 lineHeight: '1.6',
                 color: colours.foreground,
                 whiteSpace: 'pre-wrap',
@@ -243,7 +309,7 @@ const PaymentsPieChart = ({
           {/* Modal Footer */}
           <div
             style={{
-              padding: isMobile ? '12px 16px 16px' : '16px 24px 24px',
+              padding: `${parseInt(sizes.containerPadding) * 0.75}px ${sizes.containerPadding} ${sizes.containerPadding}`,
               borderTop: `1px solid ${colours.border}`,
               display: 'flex',
               justifyContent: 'flex-end',
@@ -253,7 +319,7 @@ const PaymentsPieChart = ({
               onClick={() => setShowNotesModal(false)}
               style={{
                 padding: '8px 16px',
-                fontSize: '14px',
+                fontSize: sizes.subtitleFontSize,
                 backgroundColor: colours.primary,
                 color: 'white',
                 border: 'none',
@@ -299,15 +365,17 @@ const PaymentsPieChart = ({
     }));
   };
 
-  // Custom label with connecting lines (outside segments)
+  // Enhanced custom label with connecting lines (outside segments)
   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name, index }) => {
     if (!showLabels) return null;
     
     // Only show label if percentage is above threshold
-    if (percent < 0.02) return null; // Don't show labels for slices less than 2%
+    const threshold = isSmallMobile ? 0.05 : isMobile ? 0.03 : 0.02;
+    if (percent < threshold) return null;
 
     const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 30; // Distance from pie edge to label
+    const labelDistance = isSmallMobile ? 25 : isMobile ? 30 : 35;
+    const radius = outerRadius + labelDistance;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
@@ -318,11 +386,16 @@ const PaymentsPieChart = ({
     };
     
     const lineMiddle = {
-      x: cx + (outerRadius + 15) * Math.cos(-midAngle * RADIAN),
-      y: cy + (outerRadius + 15) * Math.sin(-midAngle * RADIAN)
+      x: cx + (outerRadius + (labelDistance * 0.5)) * Math.cos(-midAngle * RADIAN),
+      y: cy + (outerRadius + (labelDistance * 0.5)) * Math.sin(-midAngle * RADIAN)
     };
 
     const formatValue = (val) => {
+      if (isSmallMobile) {
+        if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+        if (val >= 1000) return `${(val / 1000).toFixed(0)}K`;
+        return val.toString();
+      }
       if (isMobile) {
         if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
         if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
@@ -332,7 +405,13 @@ const PaymentsPieChart = ({
     };
 
     const textAnchor = x > cx ? 'start' : 'end';
-    const labelX = textAnchor === 'start' ? x + 5 : x - 5;
+    const labelX = textAnchor === 'start' ? x + 3 : x - 3;
+
+    // Dynamic label width based on content length
+    const maxNameLength = isSmallMobile ? 6 : isMobile ? 8 : 12;
+    const displayName = name.length > maxNameLength ? `${name.substring(0, maxNameLength)}...` : name;
+    const labelWidth = isSmallMobile ? 45 : isMobile ? 60 : 80;
+    const labelHeight = isSmallMobile ? 18 : isMobile ? 20 : 24;
 
     return (
       <g key={`label-${index}`}>
@@ -340,54 +419,57 @@ const PaymentsPieChart = ({
         <polyline
           points={`${lineStart.x},${lineStart.y} ${lineMiddle.x},${lineMiddle.y} ${x},${y}`}
           stroke={colours.mutedForeground}
-          strokeWidth={1}
-          fill="none"
-          strokeDasharray="none"
-        />
-        
-        {/* Label background for better readability */}
-        <rect
-          x={textAnchor === 'start' ? labelX - 2 : labelX - (isMobile ? 60 : 80)}
-          y={y - (isMobile ? 16 : 18)}
-          width={isMobile ? 65 : 85}
-          height={isMobile ? 20 : 24}
-          fill={colours.background}
-          fillOpacity={0.9}
-          rx={4}
-          stroke={colours.border}
           strokeWidth={0.5}
+          fill="none"
+          opacity={0.7}
         />
         
-        {/* Category name */}
+        {/* Transparent label background */}
+        <rect
+          x={textAnchor === 'start' ? labelX - 2 : labelX - labelWidth + 2}
+          y={y - (labelHeight * 0.8)}
+          width={labelWidth}
+          height={labelHeight}
+          fill="transparent"
+          rx={2}
+        />
+        
+        {/* Category name with text shadow for better readability */}
         <text
           x={labelX}
-          y={y - (isMobile ? 8 : 6)}
+          y={y - (isSmallMobile ? 6 : isMobile ? 6 : 4)}
           textAnchor={textAnchor}
           fill={colours.foreground}
-          fontSize={isMobile ? "10" : "12"}
+          fontSize={sizes.labelFontSize}
           fontWeight="600"
           fontFamily="ui-sans-serif, system-ui, sans-serif"
+          style={{
+            textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+          }}
         >
-          {isMobile && name.length > 8 ? `${name.substring(0, 8)}...` : name}
+          {displayName}
         </text>
         
-        {/* Value and percentage */}
+        {/* Value and percentage with text shadow */}
         <text
           x={labelX}
-          y={y + (isMobile ? 4 : 6)}
+          y={y + (isSmallMobile ? 2 : isMobile ? 4 : 6)}
           textAnchor={textAnchor}
           fill={colours.mutedForeground}
-          fontSize={isMobile ? "9" : "11"}
+          fontSize={sizes.labelValueFontSize}
           fontWeight="400"
           fontFamily="ui-sans-serif, system-ui, sans-serif"
+          style={{
+            textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+          }}
         >
-          {formatValue(value)} ({(percent * 100).toFixed(1)}%)
+          {formatValue(value)} ({(percent * 100).toFixed(isSmallMobile ? 0 : 1)}%)
         </text>
       </g>
     );
   };
 
-  // Custom tooltip
+  // Enhanced custom tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
@@ -397,10 +479,10 @@ const PaymentsPieChart = ({
             backgroundColor: colours.background,
             border: `1px solid ${colours.border}`,
             borderRadius: "8px",
-            padding: isMobile ? "8px" : "12px",
+            padding: sizes.containerPadding,
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-            fontSize: isMobile ? "12px" : "14px",
-            minWidth: isMobile ? "120px" : "150px",
+            fontSize: sizes.subtitleFontSize,
+            minWidth: isSmallMobile ? "100px" : isMobile ? "120px" : "150px",
             fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
           }}
         >
@@ -417,14 +499,14 @@ const PaymentsPieChart = ({
             gap: "6px",
           }}>
             <div style={{
-              width: "10px",
-              height: "10px",
+              width: "8px",
+              height: "8px",
               backgroundColor: data.color,
               borderRadius: "2px",
               flexShrink: 0
             }}></div>
             <span style={{ 
-              fontSize: isMobile ? "11px" : "13px",
+              fontSize: `${parseInt(sizes.subtitleFontSize) - 1}px`,
               color: colours.mutedForeground,
               display: "flex",
               alignItems: "center"
@@ -456,7 +538,7 @@ const PaymentsPieChart = ({
         src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
         alt="The Payments Association"
         style={{
-          height: isMobile ? "30px" : "40px",
+          height: sizes.logoHeight,
           width: "auto",
           maxWidth: "100%"
         }}
@@ -468,7 +550,7 @@ const PaymentsPieChart = ({
   const FooterContent = () => {
     const textStyle = {
       margin: "0",
-      fontSize: isMobile ? "10px" : "12px",
+      fontSize: `${parseInt(sizes.subtitleFontSize) - 2}px`,
       color: colours.mutedForeground,
       fontWeight: "400"
     };
@@ -509,14 +591,14 @@ const PaymentsPieChart = ({
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '8px' : '16px',
+        gap: isMobile ? '4px' : '16px',
         alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between'
       }}>
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? '4px' : '16px',
+          gap: isMobile ? '2px' : '16px',
           alignItems: isMobile ? 'flex-start' : 'center',
         }}>
           <SourceText />
@@ -534,7 +616,7 @@ const PaymentsPieChart = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '4px',
               cursor: 'pointer',
               padding: '4px',
               borderRadius: '4px',
@@ -549,10 +631,10 @@ const PaymentsPieChart = ({
             }}
             title="View chart notes"
           >
-            <InfoIcon size={isMobile ? 14 : 16} />
+            <InfoIcon size={isSmallMobile ? 12 : isMobile ? 14 : 16} />
             <span style={{
               ...textStyle,
-              fontSize: isMobile ? "9px" : "11px",
+              fontSize: `${parseInt(textStyle.fontSize) - 1}px`,
               color: colours.mutedForeground,
             }}>
               Notes
@@ -564,9 +646,9 @@ const PaymentsPieChart = ({
   };
 
   const pieData = getPieData();
-  const chartSize = isMobile ? Math.min(windowWidth - 80, 300) : Math.min(400, windowWidth - 100);
+  const chartSize = Math.min(windowWidth * 0.8, sizes.chartHeight);
   const innerRadius = showInnerRadius ? chartSize * 0.15 : 0;
-  const outerRadius = chartSize * 0.25; // Smaller radius to make room for external labels
+  const outerRadius = chartSize * sizes.outerRadiusMultiplier;
 
   return (
     <>
@@ -574,18 +656,20 @@ const PaymentsPieChart = ({
         style={{
           backgroundColor: colours.card,
           border: `1px solid ${colours.border}`,
-          borderRadius: "12px",
+          borderRadius: isMobile ? "8px" : "12px",
           fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
           overflow: "hidden",
           width: "100%",
-          boxSizing: "border-box"
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          margin: "0 auto"
         }}
         className={className}
       >
         {/* Header */}
         <div
           style={{
-            padding: isMobile ? "16px 16px 0 16px" : "24px 24px 0 24px",
+            padding: sizes.headerPadding,
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
@@ -601,7 +685,7 @@ const PaymentsPieChart = ({
               <h3
                 style={{
                   margin: "0 0 2px 0",
-                  fontSize: isMobile ? "16px" : "18px",
+                  fontSize: sizes.titleFontSize,
                   fontWeight: "600",
                   color: colours.foreground,
                   lineHeight: "1.25",
@@ -614,7 +698,7 @@ const PaymentsPieChart = ({
             <p
               style={{
                 margin: "0",
-                fontSize: isMobile ? "12px" : "14px",
+                fontSize: sizes.subtitleFontSize,
                 color: colours.mutedForeground,
                 fontWeight: "400"
               }}
@@ -635,17 +719,17 @@ const PaymentsPieChart = ({
 
         {/* Chart section */}
         <div style={{ 
-          padding: isMobile ? "16px" : "24px",
+          padding: sizes.containerPadding,
           backgroundColor: colours.cardTint,
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: height + 40, // Extra space for external labels
+          minHeight: sizes.chartHeight + (isMobile ? 30 : 40),
         }}>
-          <ResponsiveContainer width={width} height={height + 40}>
-            <RechartsPieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
+          <ResponsiveContainer width="100%" height={sizes.chartHeight + (isMobile ? 30 : 40)}>
+            <RechartsPieChart margin={sizes.chartMargin}>
               <Pie
                 data={pieData}
                 cx="50%"
@@ -679,7 +763,7 @@ const PaymentsPieChart = ({
                 <Legend
                   wrapperStyle={{
                     paddingTop: "16px",
-                    fontSize: isMobile ? "11px" : "13px",
+                    fontSize: sizes.labelFontSize,
                     color: colours.mutedForeground,
                     fontFamily: "ui-sans-serif, system-ui, sans-serif"
                   }}
@@ -696,9 +780,9 @@ const PaymentsPieChart = ({
         {/* Footer */}
         <div
           style={{
-            padding: isMobile ? "0 16px 16px 16px" : "0 24px 20px 24px",
+            padding: sizes.footerPadding,
             borderTop: `1px solid ${colours.border}`,
-            paddingTop: isMobile ? "12px" : "16px",
+            paddingTop: parseInt(sizes.containerPadding) * 0.75,
             backgroundColor: colours.card,
             boxSizing: "border-box"
           }}
