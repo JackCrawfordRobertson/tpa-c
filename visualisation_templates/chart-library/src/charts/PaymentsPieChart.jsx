@@ -25,14 +25,12 @@ const PaymentsPieChart = ({
   showLegend = true,
 }) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  const [windowHeight, setWindowHeight] = useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
     };
 
     window.addEventListener('resize', handleResize);
@@ -60,80 +58,12 @@ const PaymentsPieChart = ({
     };
   }, [showNotesModal]);
 
-  // Enhanced device breakpoints
+  // Device breakpoints - matching bar chart logic
   const isMobile = windowWidth < 768;
-  const isSmallMobile = windowWidth < 480;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isDesktop = windowWidth >= 1024;
 
-  // Dynamic sizing based on screen size
-  const getResponsiveSizes = () => {
-    if (isSmallMobile) {
-      return {
-        containerPadding: "12px",
-        headerPadding: "12px 12px 0 12px",
-        footerPadding: "0 12px 12px 12px",
-        titleFontSize: "14px",
-        subtitleFontSize: "11px",
-        logoHeight: "24px",
-        chartHeight: Math.min(windowHeight * 0.5, 350),
-        chartMargin: { top: 15, right: 50, bottom: 15, left: 50 },
-        outerRadiusMultiplier: 0.18,
-        labelFontSize: "8px",
-        labelValueFontSize: "7px",
-      };
-    }
-    
-    if (isMobile) {
-      return {
-        containerPadding: "16px",
-        headerPadding: "16px 16px 0 16px",
-        footerPadding: "0 16px 16px 16px",
-        titleFontSize: "16px",
-        subtitleFontSize: "12px",
-        logoHeight: "28px",
-        chartHeight: Math.min(windowHeight * 0.6, 400),
-        chartMargin: { top: 20, right: 60, bottom: 20, left: 60 },
-        outerRadiusMultiplier: 0.22,
-        labelFontSize: "9px",
-        labelValueFontSize: "8px",
-      };
-    }
-    
-    if (isTablet) {
-      return {
-        containerPadding: "20px",
-        headerPadding: "20px 20px 0 20px",
-        footerPadding: "0 20px 16px 20px",
-        titleFontSize: "17px",
-        subtitleFontSize: "13px",
-        logoHeight: "36px",
-        chartHeight: height,
-        chartMargin: { top: 20, right: 70, bottom: 20, left: 70 },
-        outerRadiusMultiplier: 0.28,
-        labelFontSize: "11px",
-        labelValueFontSize: "10px",
-      };
-    }
-    
-    return {
-      containerPadding: "24px",
-      headerPadding: "24px 24px 0 24px",
-      footerPadding: "0 24px 20px 24px",
-      titleFontSize: "18px",
-      subtitleFontSize: "14px",
-      logoHeight: "40px",
-      chartHeight: height,
-      chartMargin: { top: 20, right: 80, bottom: 20, left: 80 },
-      outerRadiusMultiplier: 0.32,
-      labelFontSize: "12px",
-      labelValueFontSize: "11px",
-    };
-  };
-
-  const sizes = getResponsiveSizes();
-
-  // Colour palette - only greens
+  // Colour palette - only greens (matching your brand)
   const colours = {
     primary: "#00dfb8",
     secondary: "#00573B",
@@ -208,7 +138,7 @@ const PaymentsPieChart = ({
     </svg>
   );
 
-  // Notes Modal Component
+  // Notes Modal Component - matching bar chart style
   const NotesModal = () => {
     if (!showNotesModal || !notesDescription) return null;
 
@@ -225,7 +155,7 @@ const PaymentsPieChart = ({
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 9999,
-          padding: sizes.containerPadding,
+          padding: isMobile ? '16px' : '32px',
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -250,7 +180,7 @@ const PaymentsPieChart = ({
           {/* Modal Header */}
           <div
             style={{
-              padding: sizes.containerPadding,
+              padding: isMobile ? '16px' : '24px',
               borderBottom: `1px solid ${colours.border}`,
               display: 'flex',
               alignItems: 'center',
@@ -260,7 +190,7 @@ const PaymentsPieChart = ({
             <h3
               style={{
                 margin: 0,
-                fontSize: sizes.titleFontSize,
+                fontSize: isMobile ? '16px' : '18px',
                 fontWeight: '600',
                 color: colours.foreground,
               }}
@@ -292,11 +222,15 @@ const PaymentsPieChart = ({
           </div>
 
           {/* Modal Content */}
-          <div style={{ padding: sizes.containerPadding }}>
+          <div
+            style={{
+              padding: isMobile ? '16px' : '24px',
+            }}
+          >
             <p
               style={{
                 margin: 0,
-                fontSize: sizes.subtitleFontSize,
+                fontSize: isMobile ? '14px' : '16px',
                 lineHeight: '1.6',
                 color: colours.foreground,
                 whiteSpace: 'pre-wrap',
@@ -309,7 +243,7 @@ const PaymentsPieChart = ({
           {/* Modal Footer */}
           <div
             style={{
-              padding: `${parseInt(sizes.containerPadding) * 0.75}px ${sizes.containerPadding} ${sizes.containerPadding}`,
+              padding: isMobile ? '12px 16px 16px' : '16px 24px 24px',
               borderTop: `1px solid ${colours.border}`,
               display: 'flex',
               justifyContent: 'flex-end',
@@ -319,7 +253,7 @@ const PaymentsPieChart = ({
               onClick={() => setShowNotesModal(false)}
               style={{
                 padding: '8px 16px',
-                fontSize: sizes.subtitleFontSize,
+                fontSize: '14px',
                 backgroundColor: colours.primary,
                 color: 'white',
                 border: 'none',
@@ -365,16 +299,15 @@ const PaymentsPieChart = ({
     }));
   };
 
-  // Enhanced custom label with connecting lines (outside segments)
+  // Custom label with connecting lines - optimised like bar chart
   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name, index }) => {
     if (!showLabels) return null;
     
     // Only show label if percentage is above threshold
-    const threshold = isSmallMobile ? 0.05 : isMobile ? 0.03 : 0.02;
-    if (percent < threshold) return null;
+    if (percent < 0.03) return null; // Don't show labels for slices less than 3%
 
     const RADIAN = Math.PI / 180;
-    const labelDistance = isSmallMobile ? 25 : isMobile ? 30 : 35;
+    const labelDistance = isMobile ? 25 : 35;
     const radius = outerRadius + labelDistance;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -386,16 +319,11 @@ const PaymentsPieChart = ({
     };
     
     const lineMiddle = {
-      x: cx + (outerRadius + (labelDistance * 0.5)) * Math.cos(-midAngle * RADIAN),
-      y: cy + (outerRadius + (labelDistance * 0.5)) * Math.sin(-midAngle * RADIAN)
+      x: cx + (outerRadius + 15) * Math.cos(-midAngle * RADIAN),
+      y: cy + (outerRadius + 15) * Math.sin(-midAngle * RADIAN)
     };
 
     const formatValue = (val) => {
-      if (isSmallMobile) {
-        if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-        if (val >= 1000) return `${(val / 1000).toFixed(0)}K`;
-        return val.toString();
-      }
       if (isMobile) {
         if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
         if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
@@ -406,12 +334,8 @@ const PaymentsPieChart = ({
 
     const textAnchor = x > cx ? 'start' : 'end';
     const labelX = textAnchor === 'start' ? x + 3 : x - 3;
-
-    // Dynamic label width based on content length
-    const maxNameLength = isSmallMobile ? 6 : isMobile ? 8 : 12;
+    const maxNameLength = isMobile ? 8 : 12;
     const displayName = name.length > maxNameLength ? `${name.substring(0, maxNameLength)}...` : name;
-    const labelWidth = isSmallMobile ? 45 : isMobile ? 60 : 80;
-    const labelHeight = isSmallMobile ? 18 : isMobile ? 20 : 24;
 
     return (
       <g key={`label-${index}`}>
@@ -424,52 +348,61 @@ const PaymentsPieChart = ({
           opacity={0.7}
         />
         
-        {/* Transparent label background */}
-        <rect
-          x={textAnchor === 'start' ? labelX - 2 : labelX - labelWidth + 2}
-          y={y - (labelHeight * 0.8)}
-          width={labelWidth}
-          height={labelHeight}
-          fill="transparent"
-          rx={2}
-        />
-        
         {/* Category name with text shadow for better readability */}
         <text
           x={labelX}
-          y={y - (isSmallMobile ? 6 : isMobile ? 6 : 4)}
+          y={y - (isMobile ? 6 : 4)}
           textAnchor={textAnchor}
           fill={colours.foreground}
-          fontSize={sizes.labelFontSize}
+          fontSize={isMobile ? "9" : "12"}
           fontWeight="600"
           fontFamily="ui-sans-serif, system-ui, sans-serif"
           style={{
-            textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+            filter: 'drop-shadow(1px 1px 1px rgba(255,255,255,0.8))'
           }}
         >
           {displayName}
         </text>
         
-        {/* Value and percentage with text shadow */}
+        {/* Value and percentage */}
         <text
           x={labelX}
-          y={y + (isSmallMobile ? 2 : isMobile ? 4 : 6)}
+          y={y + (isMobile ? 4 : 6)}
           textAnchor={textAnchor}
           fill={colours.mutedForeground}
-          fontSize={sizes.labelValueFontSize}
+          fontSize={isMobile ? "8" : "11"}
           fontWeight="400"
           fontFamily="ui-sans-serif, system-ui, sans-serif"
           style={{
-            textShadow: '1px 1px 2px rgba(255,255,255,0.8), -1px -1px 2px rgba(255,255,255,0.8)'
+            filter: 'drop-shadow(1px 1px 1px rgba(255,255,255,0.8))'
           }}
         >
-          {formatValue(value)} ({(percent * 100).toFixed(isSmallMobile ? 0 : 1)}%)
+          {formatValue(value)} ({(percent * 100).toFixed(1)}%)
         </text>
       </g>
     );
   };
 
-  // Enhanced custom tooltip
+  // Logo component - matching bar chart
+  const Logo = () => (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+      <img
+        src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
+        alt="The Payments Association"
+        style={{
+          height: isMobile ? "30px" : "40px",
+          width: "auto",
+          maxWidth: "100%"
+        }}
+      />
+    </div>
+  );
+
+  // Custom tooltip - matching bar chart style
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0];
@@ -479,10 +412,10 @@ const PaymentsPieChart = ({
             backgroundColor: colours.background,
             border: `1px solid ${colours.border}`,
             borderRadius: "8px",
-            padding: sizes.containerPadding,
+            padding: isMobile ? "8px" : "12px",
             boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-            fontSize: sizes.subtitleFontSize,
-            minWidth: isSmallMobile ? "100px" : isMobile ? "120px" : "150px",
+            fontSize: isMobile ? "12px" : "14px",
+            minWidth: isMobile ? "120px" : "150px",
             fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
           }}
         >
@@ -499,14 +432,14 @@ const PaymentsPieChart = ({
             gap: "6px",
           }}>
             <div style={{
-              width: "8px",
-              height: "8px",
+              width: "10px",
+              height: "10px",
               backgroundColor: data.color,
               borderRadius: "2px",
               flexShrink: 0
             }}></div>
             <span style={{ 
-              fontSize: `${parseInt(sizes.subtitleFontSize) - 1}px`,
+              fontSize: isMobile ? "11px" : "13px",
               color: colours.mutedForeground,
               display: "flex",
               alignItems: "center"
@@ -527,30 +460,11 @@ const PaymentsPieChart = ({
     return null;
   };
 
-  // Logo component
-  const Logo = () => (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }}>
-      <img
-        src="https://res.cloudinary.com/dmlmugaye/image/upload/v1754492437/PA_Logo_Black_xlb4mj.svg"
-        alt="The Payments Association"
-        style={{
-          height: sizes.logoHeight,
-          width: "auto",
-          maxWidth: "100%"
-        }}
-      />
-    </div>
-  );
-
-  // Footer content component
+  // Footer content component - matching bar chart
   const FooterContent = () => {
     const textStyle = {
       margin: "0",
-      fontSize: `${parseInt(sizes.subtitleFontSize) - 2}px`,
+      fontSize: isMobile ? "10px" : "12px",
       color: colours.mutedForeground,
       fontWeight: "400"
     };
@@ -591,14 +505,14 @@ const PaymentsPieChart = ({
       <div style={{ 
         display: 'flex', 
         flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '4px' : '16px',
+        gap: isMobile ? '8px' : '16px',
         alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between'
       }}>
         <div style={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? '2px' : '16px',
+          gap: isMobile ? '4px' : '16px',
           alignItems: isMobile ? 'flex-start' : 'center',
         }}>
           <SourceText />
@@ -616,7 +530,7 @@ const PaymentsPieChart = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '6px',
               cursor: 'pointer',
               padding: '4px',
               borderRadius: '4px',
@@ -631,10 +545,10 @@ const PaymentsPieChart = ({
             }}
             title="View chart notes"
           >
-            <InfoIcon size={isSmallMobile ? 12 : isMobile ? 14 : 16} />
+            <InfoIcon size={isMobile ? 14 : 16} />
             <span style={{
               ...textStyle,
-              fontSize: `${parseInt(textStyle.fontSize) - 1}px`,
+              fontSize: isMobile ? "9px" : "11px",
               color: colours.mutedForeground,
             }}>
               Notes
@@ -646,9 +560,8 @@ const PaymentsPieChart = ({
   };
 
   const pieData = getPieData();
-  const chartSize = Math.min(windowWidth * 0.8, sizes.chartHeight);
-  const innerRadius = showInnerRadius ? chartSize * 0.15 : 0;
-  const outerRadius = chartSize * sizes.outerRadiusMultiplier;
+  const innerRadius = showInnerRadius ? (isMobile ? 40 : 60) : 0;
+  const outerRadius = isMobile ? 80 : 120;
 
   return (
     <>
@@ -656,20 +569,18 @@ const PaymentsPieChart = ({
         style={{
           backgroundColor: colours.card,
           border: `1px solid ${colours.border}`,
-          borderRadius: isMobile ? "8px" : "12px",
+          borderRadius: "12px",
           fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
           overflow: "hidden",
           width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-          margin: "0 auto"
+          boxSizing: "border-box"
         }}
         className={className}
       >
-        {/* Header */}
+        {/* Header - matching bar chart structure */}
         <div
           style={{
-            padding: sizes.headerPadding,
+            padding: isMobile ? "16px 16px 0 16px" : "24px 24px 0 24px",
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
@@ -685,7 +596,7 @@ const PaymentsPieChart = ({
               <h3
                 style={{
                   margin: "0 0 2px 0",
-                  fontSize: sizes.titleFontSize,
+                  fontSize: isMobile ? "16px" : "18px",
                   fontWeight: "600",
                   color: colours.foreground,
                   lineHeight: "1.25",
@@ -698,7 +609,7 @@ const PaymentsPieChart = ({
             <p
               style={{
                 margin: "0",
-                fontSize: sizes.subtitleFontSize,
+                fontSize: isMobile ? "12px" : "14px",
                 color: colours.mutedForeground,
                 fontWeight: "400"
               }}
@@ -717,19 +628,21 @@ const PaymentsPieChart = ({
           )}
         </div>
 
-        {/* Chart section */}
+        {/* Chart section - matching bar chart structure */}
         <div style={{ 
-          padding: sizes.containerPadding,
+          padding: isMobile ? "16px" : "24px",
           backgroundColor: colours.cardTint,
-          boxSizing: "border-box",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: sizes.chartHeight + (isMobile ? 30 : 40),
+          boxSizing: "border-box"
         }}>
-          <ResponsiveContainer width="100%" height={sizes.chartHeight + (isMobile ? 30 : 40)}>
-            <RechartsPieChart margin={sizes.chartMargin}>
+          <ResponsiveContainer width={width} height={height}>
+            <RechartsPieChart 
+              margin={{ 
+                top: isMobile ? 20 : 30, 
+                right: isMobile ? 60 : 80, 
+                bottom: isMobile ? 20 : 30, 
+                left: isMobile ? 60 : 80 
+              }}
+            >
               <Pie
                 data={pieData}
                 cx="50%"
@@ -762,27 +675,25 @@ const PaymentsPieChart = ({
               {showLegend && !showLabels && (
                 <Legend
                   wrapperStyle={{
-                    paddingTop: "16px",
-                    fontSize: sizes.labelFontSize,
+                    paddingTop: isMobile ? "12px" : "20px",
+                    fontSize: isMobile ? "11px" : "13px",
                     color: colours.mutedForeground,
                     fontFamily: "ui-sans-serif, system-ui, sans-serif"
                   }}
                   iconType="rect"
                   layout="horizontal"
-                  align="center"
-                  verticalAlign="bottom"
                 />
               )}
             </RechartsPieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Footer */}
+        {/* Footer - matching bar chart structure */}
         <div
           style={{
-            padding: sizes.footerPadding,
+            padding: isMobile ? "0 16px 16px 16px" : "0 24px 20px 24px",
             borderTop: `1px solid ${colours.border}`,
-            paddingTop: parseInt(sizes.containerPadding) * 0.75,
+            paddingTop: isMobile ? "12px" : "16px",
             backgroundColor: colours.card,
             boxSizing: "border-box"
           }}
