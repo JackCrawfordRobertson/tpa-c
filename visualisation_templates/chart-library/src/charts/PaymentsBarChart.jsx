@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
   Tooltip,
   Legend,
   ResponsiveContainer,
 } from "recharts";
 import "../styles.css";
 
-const PaymentsBarChart = ({
+const PaymentsPieChart = ({
   data,
   width = "100%",
   height = 400,
@@ -22,15 +20,17 @@ const PaymentsBarChart = ({
   sourceText = "The payments association industry research",
   sourceUrl = null,
   notesDescription = null,
+  showInnerRadius = false,
+  showLabels = true,
+  showLegend = true,
 }) => {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  const [currentPage, setCurrentPage] = useState(0);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-      setCurrentPage(0);
     };
 
     window.addEventListener('resize', handleResize);
@@ -58,12 +58,12 @@ const PaymentsBarChart = ({
     };
   }, [showNotesModal]);
 
-  // Device breakpoints
+  // Device breakpoints - matching bar chart logic
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isDesktop = windowWidth >= 1024;
 
-  // Colour palette
+  // Colour palette - only greens (matching your brand)
   const colours = {
     primary: "#00dfb8",
     secondary: "#00573B",
@@ -84,6 +84,22 @@ const PaymentsBarChart = ({
     grid: "#f1f5f9",
     axis: "#cbd5e1",
   };
+
+  // Pie chart colour palette - only green variations
+  const pieColours = [
+    colours.primary,      // #00dfb8 - bright teal
+    colours.secondary,    // #00573B - dark green
+    colours.tertiary,     // #00C29D - medium teal
+    colours.quaternary,   // #007152 - forest green
+    colours.quinary,      // #00A783 - sea green
+    "#10d9c4",           // slightly lighter teal
+    "#004d3d",           // darker forest green
+    "#00b894",           // mint green
+    "#006b5a",           // deep green
+    "#00f5d4",           // very light teal
+    "#003d32",           // very dark green
+    "#009688",           // material teal
+  ];
 
   // Info icon SVG
   const InfoIcon = ({ size = 16, color = colours.mutedForeground }) => (
@@ -122,7 +138,7 @@ const PaymentsBarChart = ({
     </svg>
   );
 
-  // Notes Modal Component
+  // Notes Modal Component - matching bar chart style
   const NotesModal = () => {
     if (!showNotesModal || !notesDescription) return null;
 
@@ -262,62 +278,51 @@ const PaymentsBarChart = ({
     );
   };
 
-  // Calculate items per page based on device
-  const getItemsPerPage = () => {
-    if (isMobile) {
-      if (data.length <= 3) return data.length;
-      return 3;
-    }
-    if (isTablet) {
-      if (data.length <= 4) return data.length;
-      return 4;
-    }
-    return data.length;
-  };
-
-  // Get visible data based on pagination
-  const getVisibleData = () => {
-    const itemsPerPage = getItemsPerPage();
-    if (itemsPerPage >= data.length) return data;
-    
-    const startIndex = currentPage * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  // Calculate total pages
-  const getTotalPages = () => {
-    const itemsPerPage = getItemsPerPage();
-    return Math.ceil(data.length / itemsPerPage);
-  };
-
-  // Dynamic bar configuration based on data keys
-  const getBarConfigs = () => {
+  // Prepare pie data - convert the first data key to pie format
+  const getPieData = () => {
     if (!data || data.length === 0) return [];
     
+    // Get the first numeric key for pie data
     const sampleData = data[0];
-    const dataKeys = Object.keys(sampleData).filter(key => key !== 'name' && typeof sampleData[key] === 'number');
+    const numericKeys = Object.keys(sampleData).filter(key => 
+      key !== 'name' && typeof sampleData[key] === 'number'
+    );
     
-    const maxBars = isMobile ? 2 : isTablet ? 3 : 5;
+    if (numericKeys.length === 0) return [];
     
-    const barConfigs = [
-      { key: 'volume', name: isMobile ? 'Volume' : 'Transaction volume', color: colours.primary },
-      { key: 'value', name: isMobile ? 'Value (£m)' : 'Transaction value (£m)', color: colours.secondary },
-      { key: 'count', name: isMobile ? 'Count' : 'Transaction count', color: colours.tertiary },
-      { key: 'users', name: isMobile ? 'Users' : 'Active users', color: colours.quaternary },
-      { key: 'revenue', name: isMobile ? 'Revenue' : 'Revenue (£m)', color: colours.quinary },
-    ];
-
-    return barConfigs.filter(config => dataKeys.includes(config.key)).slice(0, maxBars);
+    const dataKey = numericKeys[0]; // Use first numeric key
+    
+    return data.map((item, index) => ({
+      name: item.name,
+      value: item[dataKey],
+      color: pieColours[index % pieColours.length],
+    }));
   };
 
-  // Custom label component for bar values
-  const CustomBarLabel = ({ x, y, width, height, value }) => {
-    if (isMobile && width < 30) return null;
+  // Custom label with connecting lines - optimised like bar chart
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name, index }) => {
+    if (!showLabels) return null;
     
-    const labelY = y - 5;
-    const labelX = x + width / 2;
+    // Only show label if percentage is above threshold
+    if (percent < 0.03) return null; // Don't show labels for slices less than 3%
+
+    const RADIAN = Math.PI / 180;
+    const labelDistance = isMobile ? 25 : 35;
+    const radius = outerRadius + labelDistance;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
+    // Calculate line points
+    const lineStart = {
+      x: cx + outerRadius * Math.cos(-midAngle * RADIAN),
+      y: cy + outerRadius * Math.sin(-midAngle * RADIAN)
+    };
+    
+    const lineMiddle = {
+      x: cx + (outerRadius + 15) * Math.cos(-midAngle * RADIAN),
+      y: cy + (outerRadius + 15) * Math.sin(-midAngle * RADIAN)
+    };
+
     const formatValue = (val) => {
       if (isMobile) {
         if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
@@ -326,82 +331,59 @@ const PaymentsBarChart = ({
       }
       return val.toLocaleString();
     };
-    
+
+    const textAnchor = x > cx ? 'start' : 'end';
+    const labelX = textAnchor === 'start' ? x + 3 : x - 3;
+    const maxNameLength = isMobile ? 8 : 12;
+    const displayName = name.length > maxNameLength ? `${name.substring(0, maxNameLength)}...` : name;
+
     return (
-      <text
-        x={labelX}
-        y={labelY}
-        textAnchor="middle"
-        fill={colours.foreground}
-        fontSize={isMobile ? "9" : "11"}
-        fontWeight="500"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-      >
-        {formatValue(value)}
-      </text>
+      <g key={`label-${index}`}>
+        {/* Connecting line */}
+        <polyline
+          points={`${lineStart.x},${lineStart.y} ${lineMiddle.x},${lineMiddle.y} ${x},${y}`}
+          stroke={colours.mutedForeground}
+          strokeWidth={0.5}
+          fill="none"
+          opacity={0.7}
+        />
+        
+        {/* Category name with text shadow for better readability */}
+        <text
+          x={labelX}
+          y={y - (isMobile ? 6 : 4)}
+          textAnchor={textAnchor}
+          fill={colours.foreground}
+          fontSize={isMobile ? "9" : "12"}
+          fontWeight="600"
+          fontFamily="ui-sans-serif, system-ui, sans-serif"
+          style={{
+            filter: 'drop-shadow(1px 1px 1px rgba(255,255,255,0.8))'
+          }}
+        >
+          {displayName}
+        </text>
+        
+        {/* Value and percentage */}
+        <text
+          x={labelX}
+          y={y + (isMobile ? 4 : 6)}
+          textAnchor={textAnchor}
+          fill={colours.mutedForeground}
+          fontSize={isMobile ? "8" : "11"}
+          fontWeight="400"
+          fontFamily="ui-sans-serif, system-ui, sans-serif"
+          style={{
+            filter: 'drop-shadow(1px 1px 1px rgba(255,255,255,0.8))'
+          }}
+        >
+          {formatValue(value)} ({(percent * 100).toFixed(1)}%)
+        </text>
+      </g>
     );
   };
 
-  // Pagination controls
-  const PaginationControls = () => {
-    const totalPages = getTotalPages();
-    if (totalPages <= 1) return null;
-
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '16px 0 8px 0',
-        borderTop: `1px solid ${colours.border}`,
-        marginTop: '16px'
-      }}>
-        <button
-          onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-          disabled={currentPage === 0}
-          style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            backgroundColor: currentPage === 0 ? colours.muted : colours.primary,
-            color: currentPage === 0 ? colours.mutedForeground : 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif'
-          }}
-        >
-          Previous
-        </button>
-        
-        <span style={{
-          fontSize: '12px',
-          color: colours.mutedForeground,
-          fontFamily: 'ui-sans-serif, system-ui, sans-serif'
-        }}>
-          {currentPage + 1} of {totalPages}
-        </span>
-        
-        <button
-          onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-          disabled={currentPage === totalPages - 1}
-          style={{
-            padding: '6px 12px',
-            fontSize: '12px',
-            backgroundColor: currentPage === totalPages - 1 ? colours.muted : colours.primary,
-            color: currentPage === totalPages - 1 ? colours.mutedForeground : 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif'
-          }}
-        >
-          Next
-        </button>
-      </div>
-    );
-  };
-
+  // Logo component - matching bar chart
   const Logo = () => (
     <div style={{
       display: "flex",
@@ -420,8 +402,10 @@ const PaymentsBarChart = ({
     </div>
   );
 
+  // Custom tooltip - matching bar chart style
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
+      const data = payload[0];
       return (
         <div
           style={{
@@ -440,46 +424,43 @@ const PaymentsBarChart = ({
             fontWeight: "500",
             color: colours.foreground
           }}>
-            {label}
+            {data.name}
           </p>
-          {payload.map((entry, index) => (
-            <div key={index} style={{ 
+          <div style={{ 
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}>
+            <div style={{
+              width: "10px",
+              height: "10px",
+              backgroundColor: data.color,
+              borderRadius: "2px",
+              flexShrink: 0
+            }}></div>
+            <span style={{ 
+              fontSize: isMobile ? "11px" : "13px",
+              color: colours.mutedForeground,
               display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              marginBottom: "3px"
+              alignItems: "center"
             }}>
-              <div style={{
-                width: "10px",
-                height: "10px",
-                backgroundColor: entry.color,
-                borderRadius: "2px",
-                flexShrink: 0
-              }}></div>
+              Value: 
               <span style={{ 
-                fontSize: isMobile ? "11px" : "13px",
-                color: colours.mutedForeground,
-                display: "flex",
-                alignItems: "center"
+                fontWeight: "500",
+                color: colours.foreground,
+                marginLeft: "4px"
               }}>
-                {entry.name}: 
-                <span style={{ 
-                  fontWeight: "500",
-                  color: colours.foreground,
-                  marginLeft: "4px"
-                }}>
-                  {entry.value.toLocaleString()}
-                </span>
+                {data.value.toLocaleString()}
               </span>
-            </div>
-          ))}
+            </span>
+          </div>
         </div>
       );
     }
     return null;
   };
 
-  // Footer content component
+  // Footer content component - matching bar chart
   const FooterContent = () => {
     const textStyle = {
       margin: "0",
@@ -578,9 +559,9 @@ const PaymentsBarChart = ({
     );
   };
 
-  const barConfigs = getBarConfigs();
-  const visibleData = getVisibleData();
-  const totalPages = getTotalPages();
+  const pieData = getPieData();
+  const innerRadius = showInnerRadius ? (isMobile ? 40 : 60) : 0;
+  const outerRadius = isMobile ? 80 : 120;
 
   return (
     <>
@@ -596,7 +577,7 @@ const PaymentsBarChart = ({
         }}
         className={className}
       >
-        {/* Header */}
+        {/* Header - matching bar chart structure */}
         <div
           style={{
             padding: isMobile ? "16px 16px 0 16px" : "24px 24px 0 24px",
@@ -633,12 +614,7 @@ const PaymentsBarChart = ({
                 fontWeight: "400"
               }}
             >
-              {isMobile ? "Payment analysis" : "Payment transaction analysis"}
-              {totalPages > 1 && (
-                <span style={{ marginLeft: "8px", fontSize: isMobile ? "10px" : "12px" }}>
-                  ({currentPage + 1}/{totalPages})
-                </span>
-              )}
+              {isMobile ? "Payment distribution" : "Payment transaction distribution"}
             </p>
           </div>
 
@@ -652,95 +628,67 @@ const PaymentsBarChart = ({
           )}
         </div>
 
-        {/* Chart section */}
+        {/* Chart section - matching bar chart structure */}
         <div style={{ 
           padding: isMobile ? "16px" : "24px",
           backgroundColor: colours.cardTint,
           boxSizing: "border-box"
         }}>
           <ResponsiveContainer width={width} height={height}>
-            <RechartsBarChart
-              data={visibleData}
+            <RechartsPieChart 
               margin={{ 
-                top: isMobile ? 30 : 40, 
-                right: isMobile ? 10 : 30, 
-                left: isMobile ? 10 : 20, 
-                bottom: 5 
+                top: isMobile ? 20 : 30, 
+                right: isMobile ? 60 : 80, 
+                bottom: isMobile ? 20 : 30, 
+                left: isMobile ? 60 : 80 
               }}
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={colours.grid}
-                vertical={false}
-                strokeWidth={1}
-              />
-
-              <XAxis
-                dataKey="name"
-                tick={{
-                  fill: colours.mutedForeground,
-                  fontSize: isMobile ? 10 : 12,
-                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
-                }}
-                axisLine={{ stroke: colours.border, strokeWidth: 1 }}
-                tickLine={false}
-                tickMargin={8}
-                interval={0}
-                angle={isMobile ? -45 : 0}
-                textAnchor={isMobile ? "end" : "middle"}
-                height={isMobile ? 60 : 30}
-              />
-
-              <YAxis
-                tick={{
-                  fill: colours.mutedForeground,
-                  fontSize: isMobile ? 10 : 12,
-                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
-                }}
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => {
-                  if (isMobile) {
-                    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-                    return value.toString();
-                  }
-                  return value.toLocaleString();
-                }}
-              />
-
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomLabel}
+                outerRadius={outerRadius}
+                innerRadius={innerRadius}
+                fill="#8884d8"
+                dataKey="value"
+                paddingAngle={1}
+                onMouseEnter={(_, index) => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color}
+                    stroke={hoveredIndex === index ? colours.foreground : 'none'}
+                    strokeWidth={hoveredIndex === index ? 2 : 0}
+                    style={{
+                      filter: hoveredIndex === index ? 'brightness(1.1)' : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  />
+                ))}
+              </Pie>
               <Tooltip content={<CustomTooltip />} />
-
-              <Legend
-                wrapperStyle={{
-                  paddingTop: isMobile ? "12px" : "20px",
-                  fontSize: isMobile ? "11px" : "13px",
-                  color: colours.mutedForeground,
-                  fontFamily: "ui-sans-serif, system-ui, sans-serif"
-                }}
-                iconType="rect"
-                layout={isMobile && barConfigs.length > 2 ? "vertical" : "horizontal"}
-              />
-
-              {barConfigs.map((barConfig, index) => (
-                <Bar
-                  key={barConfig.key}
-                  dataKey={barConfig.key}
-                  fill={barConfig.color}
-                  name={barConfig.name}
-                  radius={[4, 4, 0, 0]}
-                  strokeWidth={0}
-                  label={<CustomBarLabel />}
+              {showLegend && !showLabels && (
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: isMobile ? "12px" : "20px",
+                    fontSize: isMobile ? "11px" : "13px",
+                    color: colours.mutedForeground,
+                    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+                  }}
+                  iconType="rect"
+                  layout="horizontal"
                 />
-              ))}
-            </RechartsBarChart>
+              )}
+            </RechartsPieChart>
           </ResponsiveContainer>
-
-          <PaginationControls />
         </div>
 
-        {/* Footer */}
+        {/* Footer - matching bar chart structure */}
         <div
           style={{
             padding: isMobile ? "0 16px 16px 16px" : "0 24px 20px 24px",
@@ -760,14 +708,14 @@ const PaymentsBarChart = ({
   );
 };
 
-// Sample data
-const samplePaymentsData = [
-  { name: "Q1 2024", volume: 145000, value: 32060 },
-  { name: "Q2 2024", volume: 162000, value: 42150 },
-  { name: "Q3 2024", volume: 158000, value: 43320 },
-  { name: "Q4 2024", volume: 171000, value: 46840 },
-  { name: "Q1 2025", volume: 189000, value: 51200 },
-  { name: "Q2 2025", volume: 203000, value: 56780 }
+// Sample data for pie chart
+const samplePaymentsPieData = [
+  { name: "Card payments", volume: 145000 },
+  { name: "Bank transfers", volume: 89000 },
+  { name: "Digital wallets", volume: 67000 },
+  { name: "Direct debit", volume: 34000 },
+  { name: "Cash", volume: 12000 },
+  { name: "Cheques", volume: 3000 }
 ];
 
 // Global chart library
@@ -780,10 +728,10 @@ window.PaymentsCharts = {
     }
 
     const root = createRoot(container);
-    const data = options.data || samplePaymentsData;
+    const data = options.data || samplePaymentsPieData;
 
     root.render(
-      <PaymentsBarChart
+      <PaymentsPieChart
         data={data}
         width={options.width}
         height={options.height}
@@ -793,6 +741,9 @@ window.PaymentsCharts = {
         sourceText={options.sourceText}
         sourceUrl={options.sourceUrl}
         notesDescription={options.notesDescription}
+        showInnerRadius={options.showInnerRadius}
+        showLabels={options.showLabels}
+        showLegend={options.showLegend}
       />
     );
   },
@@ -800,7 +751,7 @@ window.PaymentsCharts = {
 
 // Auto-render functionality
 document.addEventListener("DOMContentLoaded", function () {
-  const chartContainers = document.querySelectorAll("[data-payments-chart]");
+  const chartContainers = document.querySelectorAll("[data-payments-pie-chart]");
   chartContainers.forEach((container) => {
     const chartData = container.getAttribute("data-chart-data");
     const chartTitle = container.getAttribute("data-chart-title");
@@ -808,6 +759,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const sourceText = container.getAttribute("data-source-text");
     const sourceUrl = container.getAttribute("data-source-url");
     const notesDescription = container.getAttribute("data-notes-description");
+    const showInnerRadius = container.getAttribute("data-show-inner-radius") === "true";
+    const showLabels = container.getAttribute("data-show-labels") !== "false";
+    const showLegend = container.getAttribute("data-show-legend") !== "false";
 
     window.PaymentsCharts.render(container.id, {
       data: chartData ? JSON.parse(chartData) : undefined,
@@ -816,8 +770,11 @@ document.addEventListener("DOMContentLoaded", function () {
       sourceText: sourceText,
       sourceUrl: sourceUrl,
       notesDescription: notesDescription,
+      showInnerRadius: showInnerRadius,
+      showLabels: showLabels,
+      showLegend: showLegend,
     });
   });
 });
 
-export default PaymentsBarChart;
+export default PaymentsPieChart;
