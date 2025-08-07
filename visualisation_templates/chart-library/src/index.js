@@ -1,1 +1,1 @@
-import './charts/PaymentsLineChart';
+import './charts/PaymentsPieChart';

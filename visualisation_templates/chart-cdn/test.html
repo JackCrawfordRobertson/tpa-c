@@ -4,7 +4,7 @@
 // Library load check - IGNORE THIS BLOCK
 if (typeof window.PaymentsCharts === 'undefined') {
   const script = document.createElement('script');
-  script.src = 'https://transcendent-lily-10f1ad.netlify.app/v1/line-payments-charts.min.js?v=1';
+  script.src = 'https://transcendent-lily-10f1ad.netlify.app/v1/pie-payments-charts.min.js?v=1';
   script.onload = function() {
     renderCharts();
   };
@@ -15,57 +15,44 @@ if (typeof window.PaymentsCharts === 'undefined') {
 
 function renderCharts() {
   // ======================================
-  // LINE CHART DATA EXAMPLES - Choose one below
+  // PIE CHART DATA EXAMPLES - Choose one below
   // ======================================
   
-  // SINGLE LINE CHART
-  const singleLineData = [
+  // PAYMENT METHOD DISTRIBUTION
+  const paymentMethodData = [
+    { name: "Card payments", volume: 145000 },
+    { name: "Bank transfers", volume: 89000 },
+    { name: "Digital wallets", volume: 67000 },
+    { name: "Direct debit", volume: 34000 },
+    { name: "Cash", volume: 12000 },
+    { name: "Cheques", volume: 3000 }
+  ];
+
+  // QUARTERLY BREAKDOWN
+  const quarterlyData = [
     { name: "Q1 2024", volume: 145000 },
     { name: "Q2 2024", volume: 162000 },
     { name: "Q3 2024", volume: 158000 },
     { name: "Q4 2024", volume: 171000 }
   ];
 
-  // TWO LINE CHART (Most Common)
-  const twoLineData = [
-    { name: "Q1 2024", volume: 145000, value: 32060 },
-    { name: "Q2 2024", volume: 162000, value: 42150 },
-    { name: "Q3 2024", volume: 158000, value: 43320 },
-    { name: "Q4 2024", volume: 171000, value: 46840 },
-    { name: "Q1 2025", volume: 189000, value: 51200 },
-    { name: "Q2 2025", volume: 203000, value: 56780 }
+  // REGIONAL DISTRIBUTION
+  const regionalData = [
+    { name: "London", volume: 185000 },
+    { name: "South East", volume: 142000 },
+    { name: "North West", volume: 98000 },
+    { name: "Scotland", volume: 67000 },
+    { name: "Wales", volume: 45000 },
+    { name: "Other regions", volume: 89000 }
   ];
 
-  // THREE LINE CHART
-  const threeLineData = [
-    { name: "Q1 2024", volume: 145000, value: 32060, count: 12500 },
-    { name: "Q2 2024", volume: 162000, value: 42150, count: 15300 },
-    { name: "Q3 2024", volume: 158000, value: 43320, count: 14800 },
-    { name: "Q4 2024", volume: 171000, value: 46840, count: 16200 }
-  ];
-
-  // FIVE LINE CHART (Maximum)
-  const fiveLineData = [
-    { name: "Q1", volume: 145000, value: 32060, count: 12500, users: 8500, revenue: 125 },
-    { name: "Q2", volume: 162000, value: 42150, count: 15300, users: 9200, revenue: 142 },
-    { name: "Q3", volume: 158000, value: 43320, count: 14800, users: 8900, revenue: 138 },
-    { name: "Q4", volume: 171000, value: 46840, count: 16200, users: 9800, revenue: 156 }
-  ];
-
-  // LARGE DATASET EXAMPLE (Tests mobile pagination)
-  const largeLineDataset = [
-    { name: "Jan 2024", volume: 145000, value: 32060 },
-    { name: "Feb 2024", volume: 162000, value: 42150 },
-    { name: "Mar 2024", volume: 158000, value: 43320 },
-    { name: "Apr 2024", volume: 171000, value: 46840 },
-    { name: "May 2024", volume: 189000, value: 51200 },
-    { name: "Jun 2024", volume: 203000, value: 56780 },
-    { name: "Jul 2024", volume: 195000, value: 54300 },
-    { name: "Aug 2024", volume: 187000, value: 52100 },
-    { name: "Sep 2024", volume: 201000, value: 58200 },
-    { name: "Oct 2024", volume: 215000, value: 61800 },
-    { name: "Nov 2024", volume: 208000, value: 59400 },
-    { name: "Dec 2024", volume: 225000, value: 65000 }
+  // TRANSACTION VALUE BANDS
+  const valueBandData = [
+    { name: "Under £10", volume: 245000 },
+    { name: "£10-£50", volume: 189000 },
+    { name: "£50-£200", volume: 123000 },
+    { name: "£200-£1000", volume: 67000 },
+    { name: "Over £1000", volume: 23000 }
   ];
 
   // ======================================
@@ -75,20 +62,25 @@ function renderCharts() {
   window.PaymentsCharts.render('payments-chart-quarterly', {
 
     // DATA: Choose one from above examples
-    data: largeLineDataset, // Two line chart showing volume and value trends
+    data: paymentMethodData, // Payment method distribution
     
     // CHART SETTINGS
-    title: 'Quarterly Payment Trends',
+    title: 'UK Payment Method Distribution',
     showLogo: true, // Set to false to hide logo
     width: '100%',
     height: 400,
+    
+    // PIE CHART SPECIFIC OPTIONS
+    showInnerRadius: false, // Set to true for donut chart
+    showLabels: true, // Set to false to hide value labels on slices
+    showLegend: true, // Set to false to hide legend
     
     // SOURCE INFORMATION
     sourceText: 'UK Finance quarterly payment data',
     sourceUrl: 'https://www.ukfinance.org.uk/data-and-research/payment-statistics',
     
     // NOTES (Optional - leave blank or remove for no notes icon)
-    notesDescription: 'This line chart shows quarterly payment trends over time. Perfect for displaying time-series data and identifying patterns.',
+    notesDescription: 'This pie chart shows the distribution of UK payment methods by transaction volume. Data includes all major payment channels monitored by UK Finance.',
   });
 }
 </script>
