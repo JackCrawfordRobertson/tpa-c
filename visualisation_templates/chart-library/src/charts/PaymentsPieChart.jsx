@@ -63,7 +63,7 @@ const PaymentsPieChart = ({
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
   const isDesktop = windowWidth >= 1024;
 
-  // Colour palette
+  // Colour palette - only greens
   const colours = {
     primary: "#00dfb8",
     secondary: "#00573B",
@@ -85,20 +85,20 @@ const PaymentsPieChart = ({
     axis: "#cbd5e1",
   };
 
-  // Pie chart colour palette
+  // Pie chart colour palette - only green variations
   const pieColours = [
-    colours.primary,
-    colours.secondary,
-    colours.tertiary,
-    colours.quaternary,
-    colours.quinary,
-    "#38bdf8", // sky-400
-    "#f59e0b", // amber-500
-    "#ef4444", // red-500
-    "#8b5cf6", // violet-500
-    "#10b981", // emerald-500
-    "#f97316", // orange-500
-    "#ec4899", // pink-500
+    colours.primary,      // #00dfb8 - bright teal
+    colours.secondary,    // #00573B - dark green
+    colours.tertiary,     // #00C29D - medium teal
+    colours.quaternary,   // #007152 - forest green
+    colours.quinary,      // #00A783 - sea green
+    "#10d9c4",           // slightly lighter teal
+    "#004d3d",           // darker forest green
+    "#00b894",           // mint green
+    "#006b5a",           // deep green
+    "#00f5d4",           // very light teal
+    "#003d32",           // very dark green
+    "#009688",           // material teal
   ];
 
   // Info icon SVG
@@ -299,17 +299,28 @@ const PaymentsPieChart = ({
     }));
   };
 
-  // Custom label for pie segments
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name }) => {
+  // Custom label with connecting lines (outside segments)
+  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, value, name, index }) => {
     if (!showLabels) return null;
     
+    // Only show label if percentage is above threshold
+    if (percent < 0.02) return null; // Don't show labels for slices less than 2%
+
     const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const radius = outerRadius + 30; // Distance from pie edge to label
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
-    // Only show label if percentage is above threshold
-    if (percent < 0.05) return null; // Don't show labels for slices less than 5%
+    // Calculate line points
+    const lineStart = {
+      x: cx + outerRadius * Math.cos(-midAngle * RADIAN),
+      y: cy + outerRadius * Math.sin(-midAngle * RADIAN)
+    };
+    
+    const lineMiddle = {
+      x: cx + (outerRadius + 15) * Math.cos(-midAngle * RADIAN),
+      y: cy + (outerRadius + 15) * Math.sin(-midAngle * RADIAN)
+    };
 
     const formatValue = (val) => {
       if (isMobile) {
@@ -320,19 +331,59 @@ const PaymentsPieChart = ({
       return val.toLocaleString();
     };
 
+    const textAnchor = x > cx ? 'start' : 'end';
+    const labelX = textAnchor === 'start' ? x + 5 : x - 5;
+
     return (
-      <text
-        x={x}
-        y={y}
-        fill={colours.background}
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        fontSize={isMobile ? "10" : "12"}
-        fontWeight="600"
-        fontFamily="ui-sans-serif, system-ui, sans-serif"
-      >
-        {isMobile ? `${(percent * 100).toFixed(0)}%` : formatValue(value)}
-      </text>
+      <g key={`label-${index}`}>
+        {/* Connecting line */}
+        <polyline
+          points={`${lineStart.x},${lineStart.y} ${lineMiddle.x},${lineMiddle.y} ${x},${y}`}
+          stroke={colours.mutedForeground}
+          strokeWidth={1}
+          fill="none"
+          strokeDasharray="none"
+        />
+        
+        {/* Label background for better readability */}
+        <rect
+          x={textAnchor === 'start' ? labelX - 2 : labelX - (isMobile ? 60 : 80)}
+          y={y - (isMobile ? 16 : 18)}
+          width={isMobile ? 65 : 85}
+          height={isMobile ? 20 : 24}
+          fill={colours.background}
+          fillOpacity={0.9}
+          rx={4}
+          stroke={colours.border}
+          strokeWidth={0.5}
+        />
+        
+        {/* Category name */}
+        <text
+          x={labelX}
+          y={y - (isMobile ? 8 : 6)}
+          textAnchor={textAnchor}
+          fill={colours.foreground}
+          fontSize={isMobile ? "10" : "12"}
+          fontWeight="600"
+          fontFamily="ui-sans-serif, system-ui, sans-serif"
+        >
+          {isMobile && name.length > 8 ? `${name.substring(0, 8)}...` : name}
+        </text>
+        
+        {/* Value and percentage */}
+        <text
+          x={labelX}
+          y={y + (isMobile ? 4 : 6)}
+          textAnchor={textAnchor}
+          fill={colours.mutedForeground}
+          fontSize={isMobile ? "9" : "11"}
+          fontWeight="400"
+          fontFamily="ui-sans-serif, system-ui, sans-serif"
+        >
+          {formatValue(value)} ({(percent * 100).toFixed(1)}%)
+        </text>
+      </g>
     );
   };
 
@@ -515,7 +566,7 @@ const PaymentsPieChart = ({
   const pieData = getPieData();
   const chartSize = isMobile ? Math.min(windowWidth - 80, 300) : Math.min(400, windowWidth - 100);
   const innerRadius = showInnerRadius ? chartSize * 0.15 : 0;
-  const outerRadius = chartSize * 0.35;
+  const outerRadius = chartSize * 0.25; // Smaller radius to make room for external labels
 
   return (
     <>
@@ -588,13 +639,13 @@ const PaymentsPieChart = ({
           backgroundColor: colours.cardTint,
           boxSizing: "border-box",
           display: "flex",
-          flexDirection: isMobile && showLegend ? "column" : "row",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: height,
+          minHeight: height + 40, // Extra space for external labels
         }}>
-          <ResponsiveContainer width={width} height={height}>
-            <RechartsPieChart>
+          <ResponsiveContainer width={width} height={height + 40}>
+            <RechartsPieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
               <Pie
                 data={pieData}
                 cx="50%"
@@ -624,18 +675,18 @@ const PaymentsPieChart = ({
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
-              {showLegend && (
+              {showLegend && !showLabels && (
                 <Legend
                   wrapperStyle={{
-                    paddingTop: isMobile ? "16px" : "20px",
+                    paddingTop: "16px",
                     fontSize: isMobile ? "11px" : "13px",
                     color: colours.mutedForeground,
                     fontFamily: "ui-sans-serif, system-ui, sans-serif"
                   }}
                   iconType="rect"
-                  layout={isMobile ? "horizontal" : "horizontal"}
+                  layout="horizontal"
                   align="center"
-                  verticalAlign={isMobile ? "bottom" : "bottom"}
+                  verticalAlign="bottom"
                 />
               )}
             </RechartsPieChart>
